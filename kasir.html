@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir Online</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; padding: 16px; color: #1e293b; }
+        .container { max-width: 450px; margin: auto; background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h2 { text-align: center; color: #6d28d9; margin-bottom: 20px; }
+        .form-group { margin-bottom: 12px; }
+        label { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; margin-top: 4px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 10px; background: #6d28d9; color: white; font-weight: 800; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>KASIR ONLINE</h2>
+    <div class="form-group">
+        <label>Nama Customer</label>
+        <input type="text" id="namaCust">
+    </div>
+    <div class="form-group">
+        <label>No. WhatsApp</label>
+        <input type="text" id="noWa" placeholder="08xxxxxxxxxx">
+    </div>
+    <div class="form-group">
+        <label>Pilih Barang</label>
+        <select id="pilihBarang"></select>
+    </div>
+    <div class="form-group">
+        <label>Qty</label>
+        <input type="number" id="qty" value="1">
+    </div>
+    <button onclick="prosesTransaksi()">KIRIM NOTA VIA WA</button>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
+
+    // 1. Ambil data produk saat web dibuka
+    fetch(WEB_APP_URL)
+        .then(r => r.json())
+        .then(res => {
+            let select = document.getElementById('pilihBarang');
+            res.produk.forEach(p => {
+                select.innerHTML += `<option value="${p.nama}|${p.harga}">${p.nama} - Rp ${p.harga.toLocaleString()}</option>`;
+            });
+        });
+
+    function prosesTransaksi() {
+        let nama = document.getElementById('namaCust').value;
+        let wa = document.getElementById('noWa').value;
+        let barangRaw = document.getElementById('pilihBarang').value.split('|');
+        let qty = document.getElementById('qty').value;
+        
+        let namaBarang = barangRaw[0];
+        let harga = parseInt(barangRaw[1]);
+        let total = harga * qty;
+
+        // 2. Simpan ke Google Sheet
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                namaCust: nama,
+                noWa: wa,
+                rincianBarang: namaBarang + " (" + qty + "x)",
+                totalHarga: total
+            })
+        });
+
+        // 3. Kirim ke WhatsApp
+        let waLink = `https://wa.me/62${wa.substring(1)}?text=` + 
+                     encodeURIComponent(`*NOTA UFO KEBONSARI*\n\nKepada: ${nama}\n\nBarang: ${namaBarang} (${qty}x)\nTotal: Rp ${total.toLocaleString()}\n\nTerima kasih!`);
+        window.open(waLink, '_blank');
+    }
+</script>
+</body>
+</html>
