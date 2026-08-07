@@ -31,10 +31,13 @@
         .header-right { display: flex; align-items: center; gap: 8px; }
 
         /* Indikator Online / Offline */
-        .status-dot-container { display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 8px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #475569; }
+        .status-dot-container { display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 8px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #475569; position: relative; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; transition: 0.3s; }
         .status-dot.online { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
         .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+        
+        /* Badge untuk menampilkan jumlah antrean pending offline */
+        .sync-badge { background: #f59e0b; color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 10px; display: none; }
 
         .privacy-pill { background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s; }
         .privacy-pill:active { background: #e2e8f0; transform: scale(0.96); }
@@ -86,10 +89,11 @@
             <span>Pasar Blimbing</span>
         </div>
         <div class="header-right">
-            <!-- Indikator Online/Offline -->
+            <!-- Indikator Online/Offline & Badge Sync -->
             <div class="status-dot-container">
                 <div class="status-dot" id="statusDot"></div>
                 <span id="statusText">Cek...</span>
+                <span class="sync-badge" id="syncBadge" title="Transaksi offline belum disinkronkan">0</span>
             </div>
             <!-- Tombol Rekap -->
             <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
@@ -164,17 +168,17 @@
         tampilkanTanggalHariIni();
         updateStatusKoneksi();
         
-        // 1. Ambil data dari Cache Lokal (bisa dibuka meskipun offline / tanpa sinyal)
+        // 1. Muat cache lokal agar langsung siap digunakan walau offline total
         muatDataLocalCache();
         
-        // 2. Jika online, sinkronkan data terbaru dari server secara senyap (background)
+        // 2. Jika saat dibuka ada koneksi internet, lakukan sinkronisasi data & auto-sync antrean offline
         if (navigator.onLine) {
-            muatDataServer();
+            sinkronisasiDanMuatServer();
         }
 
         window.addEventListener('online', () => {
             updateStatusKoneksi();
-            muatDataServer();
+            sinkronisasiDanMuatServer(); // Auto-sync ketika internet nyambung kembali
         });
         window.addEventListener('offline', updateStatusKoneksi);
     };
@@ -188,9 +192,20 @@
     function updateStatusKoneksi() {
         const dot = document.getElementById('statusDot');
         const text = document.getElementById('statusText');
+        const badge = document.getElementById('syncBadge');
+        
+        // Hitung jumlah transaksi offline yang belum terkirim ke server
+        let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+        if (queue.length > 0) {
+            badge.style.display = 'inline-block';
+            badge.innerText = queue.length;
+        } else {
+            badge.style.display = 'none';
+        }
+
         if (navigator.onLine) {
             dot.className = "status-dot online";
-            text.innerText = "Online";
+            text.innerText = queue.length > 0 ? "Sync..." : "Online";
         } else {
             dot.className = "status-dot offline";
             text.innerText = "Offline";
@@ -222,7 +237,40 @@
         }
     }
 
-    function muatDataServer() {
+    // Fungsi untuk mengirim antrean transaksi offline ke Google Spreadsheet secara berurutan
+    async function prosesAntreanOffline() {
+        let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+        if (queue.length === 0 || !navigator.onLine) return;
+
+        updateStatusKoneksi();
+        let sisaQueue = [...queue];
+
+        for (let item of queue) {
+            try {
+                let response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(item)
+                });
+                let res = await response.json();
+                if (res.status === "OK") {
+                    // Jika sukses terkirim, hapus dari antrean offline
+                    sisaQueue.shift();
+                    localStorage.setItem('wollfish_offline_queue', JSON.stringify(sisaQueue));
+                } else {
+                    break; // Berhenti jika server merespons error
+                }
+            } catch (err) {
+                break; // Berhenti jika koneksi terputus di tengah jalan
+            }
+        }
+        updateStatusKoneksi();
+    }
+
+    async function sinkronisasiDanMuatServer() {
+        // Jalankan sinkronisasi data offline terlebih dahulu ke spreadsheet
+        await prosesAntreanOffline();
+
+        // Ambil data terbaru dari spreadsheet (produk & rekap transaksi)
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
@@ -237,7 +285,7 @@
                 }
                 updateStatusKoneksi();
             })
-            .catch(err => {
+            .catch(() => {
                 updateStatusKoneksi();
             });
     }
@@ -315,66 +363,80 @@
         spin.style.display = "block";
 
         let p = produk[idx];
-
-        // Hitung estimasi omzet & laba lokal untuk update langsung di layar (tanpa reload)
         let modalPerKg = Number(p.modalKg || 0);
         let qtyKg = satuan === "Ons" ? qty / 10 : qty;
         let totalModal = modalPerKg * qtyKg;
         let labaLokal = totalJual - totalModal;
         let todayIso = new Date().toISOString().split('T')[0];
 
-        // Masukkan transaksi baru ke memori lokal sementara
+        // 1. Update Rekap Seketika di Layar & Cache Lokal
         transaksiGlobal.push({
             tanggal: todayIso,
             omzet: totalJual,
             laba: labaLokal
         });
         localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(transaksiGlobal));
-        hitungRekap(transaksiGlobal); // Update rekap seketika di layar
+        hitungRekap(transaksiGlobal);
 
-        // Jika offline, simpan notifikasi sukses lokal
+        // 2. Format payload data transaksi yang akan dikirim
+        let payloadData = {
+            namaBarang: p.nama,
+            modalKg: p.modalKg,
+            qty: qty,
+            satuan: satuan,
+            totalOmzet: totalJual
+        };
+
+        // 3. Jika sedang offline, masukkan ke antrean penyimpanan lokal (offline queue)
         if (!navigator.onLine) {
-            showToast("⚠️ Offline: Transaksi disimpan di HP.");
-            setTimeout(() => {
-                btn.disabled = false;
-                txt.style.display = "inline";
-                spin.style.display = "none";
-                document.getElementById('totalJual').value = "";
-            }, 1000);
+            let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+            queue.push(payloadData);
+            localStorage.setItem('wollfish_offline_queue', JSON.stringify(queue));
+            updateStatusKoneksi();
+
+            showToast("⚠️ Offline: Tersimpan di HP & Masuk Antrean Sync.");
+            selesaiSimpanUI(btn, txt, spin);
             return;
         }
 
-        // Jika online, kirim ke server
+        // 4. Jika online, langsung kirim ke Google Apps Script
         fetch(WEB_APP_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                namaBarang: p.nama,
-                modalKg: p.modalKg,
-                qty: qty,
-                satuan: satuan,
-                totalOmzet: totalJual
-            })
-        }).then(r => r.json()).then(res => {
+            body: JSON.stringify(payloadData)
+        })
+        .then(r => r.json())
+        .then(res => {
             if(res.status === "OK") {
-                showToast("✨ Transaksi Berhasil Disimpan!");
+                showToast("✨ Transaksi Berhasil & Disinkronkan!");
             } else {
-                showToast("⚠️ Tersimpan di HP (Server Warning).");
+                // Jika gagal server, masukkan ke antrean offline agar aman
+                let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+                queue.push(payloadData);
+                localStorage.setItem('wollfish_offline_queue', JSON.stringify(queue));
+                updateStatusKoneksi();
+                showToast("⚠️ Server sibuk: Masuk antrean sync HP.");
             }
-            setTimeout(() => {
-                btn.disabled = false;
-                txt.style.display = "inline";
-                spin.style.display = "none";
-                document.getElementById('totalJual').value = "";
-            }, 1000);
-        }).catch(() => {
-            showToast("⚠️ Jaringan putus, tersimpan di HP.");
-            setTimeout(() => {
-                btn.disabled = false;
-                txt.style.display = "inline";
-                spin.style.display = "none";
-                document.getElementById('totalJual').value = "";
-            }, 1000);
+            selesaiSimpanUI(btn, txt, spin);
+        })
+        .catch(() => {
+            // Jika koneksi terputus di tengah pengiriman, masukkan ke antrean offline
+            let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+            queue.push(payloadData);
+            localStorage.setItem('wollfish_offline_queue', JSON.stringify(queue));
+            updateStatusKoneksi();
+            
+            showToast("⚠️ Jaringan putus: Masuk antrean sync HP.");
+            selesaiSimpanUI(btn, txt, spin);
         });
+    }
+
+    function selesaiSimpanUI(btn, txt, spin) {
+        setTimeout(() => {
+            btn.disabled = false;
+            txt.style.display = "inline";
+            spin.style.display = "none";
+            document.getElementById('totalJual').value = "";
+        }, 1000);
     }
 </script>
 </body>
