@@ -49,22 +49,19 @@
     <label class="label">Harga Jual (Total dari Pembeli)</label>
     <input type="number" id="totalJual" placeholder="Contoh: 10000">
 
-    <label class="label">Modal / HPP (Perkiraan Modal Ikan Tersebut)</label>
-    <input type="number" id="totalModal" placeholder="Contoh: 6500">
-
     <button class="btn" onclick="simpanTransaksi()">Simpan Transaksi 💾</button>
 
-    <!-- Kotak Rekap Bersih (Hanya Omzet & Untung Bersih) -->
+    <!-- Kotak Rekap (Hanya Omzet & Laba Bersih) -->
     <div class="rekap-container">
         <div class="rekap-card">
             <div class="rekap-title">Hari Ini</div>
             <div class="rekap-row"><span>Omzet:</span> <span id="hOmzet">Rp 0</span></div>
-            <div class="rekap-row highlight"><span>Untung:</span> <span id="hMargin">Rp 0</span></div>
+            <div class="rekap-row highlight"><span>Laba:</span> <span id="hLaba">Rp 0</span></div>
         </div>
         <div class="rekap-card">
             <div class="rekap-title">Bulan Ini</div>
             <div class="rekap-row"><span>Omzet:</span> <span id="bOmzet">Rp 0</span></div>
-            <div class="rekap-row highlight"><span>Untung:</span> <span id="bMargin">Rp 0</span></div>
+            <div class="rekap-row highlight"><span>Laba:</span> <span id="bLaba">Rp 0</span></div>
         </div>
     </div>
 </div>
@@ -80,7 +77,7 @@
                 produk = res.produk;
                 let s = document.getElementById('pilihBarang');
                 s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
-                produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
+                produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama} (Modal Rp ${p.modalKg.toLocaleString('id-ID')}/Kg)</option>`);
 
                 hitungDanTampilkanRekap(res.transaksi);
             });
@@ -90,32 +87,31 @@
         const today = new Date().toISOString().split('T')[0];
         const currentMonth = today.substring(0, 7);
 
-        let hOmzet = 0, hMargin = 0;
-        let bOmzet = 0, bMargin = 0;
+        let hOmzet = 0, hLaba = 0;
+        let bOmzet = 0, bLaba = 0;
 
         transaksi.forEach(t => {
             if (t.tanggal === today) {
-                hOmzet += t.omzet; hMargin += t.margin;
+                hOmzet += t.omzet; hLaba += t.laba;
             }
             if (t.tanggal.startsWith(currentMonth)) {
-                bOmzet += t.omzet; bMargin += t.margin;
+                bOmzet += t.omzet; bLaba += t.laba;
             }
         });
 
         document.getElementById('hOmzet').innerText = "Rp " + hOmzet.toLocaleString('id-ID');
-        document.getElementById('hMargin').innerText = "Rp " + hMargin.toLocaleString('id-ID');
+        document.getElementById('hLaba').innerText = "Rp " + hLaba.toLocaleString('id-ID');
 
         document.getElementById('bOmzet').innerText = "Rp " + bOmzet.toLocaleString('id-ID');
-        document.getElementById('bMargin').innerText = "Rp " + bMargin.toLocaleString('id-ID');
+        document.getElementById('bLaba').innerText = "Rp " + bLaba.toLocaleString('id-ID');
     }
 
     function simpanTransaksi() {
         let idx = document.getElementById('pilihBarang').value;
         let qty = parseFloat(document.getElementById('qty').value);
         let totalJual = parseFloat(document.getElementById('totalJual').value);
-        let totalModal = parseFloat(document.getElementById('totalModal').value);
 
-        if (idx === "" || isNaN(qty) || isNaN(totalJual) || isNaN(totalModal)) {
+        if (idx === "" || isNaN(qty) || isNaN(totalJual)) {
             alert("Harap lengkapi semua kolom dengan benar!");
             return;
         }
@@ -125,10 +121,10 @@
             method: 'POST',
             body: JSON.stringify({
                 namaBarang: p.nama,
+                modalKg: p.modalKg,
                 qty: qty,
                 satuan: document.getElementById('satuan').value,
-                totalOmzet: totalJual,
-                totalModal: totalModal
+                totalOmzet: totalJual
             })
         }).then(r => r.json()).then(res => {
             if(res.status === "OK") {
