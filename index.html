@@ -8,10 +8,10 @@
     <style>
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        /* Background Gambar Kartun Ikan dengan Efek Lapisan Gelap Tipis */
+        /* Background Ilustrasi Kartun Ikan Laut yang Ceria */
         body { 
-            background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
-                        url('https://images.unsplash.com/photo-1534567153574-2b12153a87f0?q=80&w=1000&auto=format&fit=crop') no-repeat center center fixed; 
+            background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.75)), 
+                        url('https://img.freepik.com/free-vector/underwater-background-with-cute-cartoon-fish-sea-animals_1284-42996.jpg') no-repeat center center fixed; 
             background-size: cover;
             margin: 0; 
             padding: 16px; 
@@ -63,11 +63,12 @@
         .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; display: flex; align-items: center; gap: 8px; border: 2px solid #334155; }
         .toast-modern.show { transform: translateX(-50%) translateY(0); }
 
-        /* Panel Laporan Rahasia */
+        /* Panel Laporan Rekap & Tanggal */
         .rekap-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-top: 24px; display: none; animation: slideUp 0.3s ease; }
         .rekap-card.open { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        .rekap-header-date { font-size: 12px; font-weight: 800; color: #0ea5e9; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; text-align: center; background: #e0f2fe; padding: 6px; border-radius: 8px; }
         .rekap-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 15px; font-weight: 700; color: #334155; }
         .rekap-item:last-child { margin-bottom: 0; }
         .rekap-val { color: #10b981; font-weight: 800; font-size: 16px; }
@@ -91,9 +92,9 @@
                 <div class="status-dot" id="statusDot"></div>
                 <span id="statusText">Cek...</span>
             </div>
-            <!-- Tombol Laba -->
+            <!-- Tombol Rekap -->
             <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
-                <span id="privacyIcon">👁️</span> <span id="privacyText">Laba</span>
+                <span id="privacyIcon">👁️</span> <span id="privacyText">Rekap</span>
             </button>
         </div>
     </div>
@@ -125,14 +126,15 @@
         <input type="number" id="totalJual" placeholder="Contoh: 10000">
     </div>
 
-    <!-- Tombol Simpan tepat di bawah Harga Jual -->
+    <!-- Tombol Simpan -->
     <button class="btn-main" id="btnSimpan" onclick="simpanTransaksi()">
         <span id="btnText">Simpan Transaksi</span>
         <div class="spinner" id="btnSpinner"></div>
     </button>
 
-    <!-- Panel Rekap Rahasia -->
+    <!-- Panel Rekap & Tanggal Otomatis -->
     <div class="rekap-card" id="rekapPanel">
+        <div class="rekap-header-date" id="labelTanggalHariIni">📅 Memuat Tanggal...</div>
         <div class="rekap-item">
             <span>Omzet Hari Ini:</span>
             <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
@@ -154,16 +156,23 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "URL_WEB_APP_ANDA_DISINI";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
     let produk = [];
     let rekapBuka = false;
 
     window.onload = () => {
+        tampilkanTanggalHariIni();
         cekKoneksiInternet();
         muatData();
         window.addEventListener('online', updateStatusKoneksi);
         window.addEventListener('offline', updateStatusKoneksi);
     };
+
+    function tampilkanTanggalHariIni() {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const todayString = new Date().toLocaleDateString('id-ID', options);
+        document.getElementById('labelTanggalHariIni').innerText = `📅 Hari Ini: ${todayString}`;
+    }
 
     function updateStatusKoneksi() {
         const dot = document.getElementById('statusDot');
@@ -221,7 +230,7 @@
         } else {
             panel.classList.remove('open');
             icon.innerText = "👁️";
-            text.innerText = "Laba";
+            text.innerText = "Rekap";
         }
     }
 
