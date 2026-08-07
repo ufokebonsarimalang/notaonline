@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WOLL FISH POS</title>
+    <title>WOLL FISH POS (Offline Ready)</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -11,11 +11,17 @@
         
         .app-container { width: 100%; max-width: 480px; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); position: relative; margin-bottom: 20px; }
 
-        /* Header */
+        /* Header & Status Koneksi */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; }
         .brand h1 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
+        .brand-sub { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
         .brand span { font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         
+        /* Indikator Online/Offline */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .status-dot.online { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
         .privacy-pill { background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .privacy-pill:active { background: #e2e8f0; }
 
@@ -29,16 +35,15 @@
         .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
 
-        /* Tombol Simpan Utama (Pasti Tampil & Bisa Di-klik) */
+        /* Tombol Simpan Utama */
         .btn-main { width: 100%; padding: 16px; background: #0ea5e9; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 16px -4px rgba(14, 165, 233, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
         .btn-main:active { background: #0284c7; }
         .btn-main:disabled { background: #94a3b8; cursor: not-allowed; }
 
-        /* Spinner Khusus Tombol */
         .spinner { display: none; width: 18px; height: 18px; border: 3px solid #ffffff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Toast Modern Pengganti Alert */
+        /* Toast Modern */
         .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 12px 20px; border-radius: 30px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; display: flex; align-items: center; gap: 8px; }
         .toast-modern.show { transform: translateX(-50%) translateY(0); }
 
@@ -69,7 +74,6 @@
             <button class="close-btn" onclick="toggleRekap()">✕</button>
         </div>
         
-        <!-- Hari Ini -->
         <div>
             <div class="periode-label">Hari Ini <span id="teksTglHariIni" style="color: #0ea5e9; text-transform: none;"></span></div>
             <div class="rekap-item">
@@ -84,7 +88,6 @@
 
         <div class="divider"></div>
 
-        <!-- Bulan Ini -->
         <div>
             <div class="periode-label">Bulan Ini <span id="teksRentangBulan" style="color: #0ea5e9; text-transform: none;"></span></div>
             <div class="rekap-item">
@@ -104,7 +107,10 @@
     <div class="header">
         <div class="brand">
             <h1>WOLL FISH</h1>
-            <span>Pasar Blimbing</span>
+            <div class="brand-sub">
+                <span id="statusDot" class="status-dot online"></span>
+                <span id="statusText">Pasar Blimbing</span>
+            </div>
         </div>
         <button class="privacy-pill" onclick="toggleRekap()">
             <span>👁️</span> Laba
@@ -136,7 +142,7 @@
         <input type="number" id="totalJual" placeholder="Contoh: 10000">
     </div>
 
-    <!-- Tombol Simpan (Pasti muncul dan bisa discroll/dilihat dengan jelas) -->
+    <!-- Tombol Simpan -->
     <button class="btn-main" id="btnSimpan" onclick="simpanTransaksi()">
         <span id="btnText">Simpan Transaksi</span>
         <div class="spinner" id="btnSpinner"></div>
@@ -155,17 +161,60 @@
         document.getElementById('teksTglHariIni').innerText = `(${tglSkrg} ${bulan})`;
         document.getElementById('teksRentangBulan').innerText = `(1 s.d. ${tglSkrg} ${bulan})`;
 
+        // Cek Status Koneksi Internet Realtime
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // Ambil Data Produk (Gunakan Cache Offline jika internet mati)
+        loadDataProduk();
+    };
+
+    function updateOnlineStatus() {
+        let dot = document.getElementById('statusDot');
+        let text = document.getElementById('statusText');
+        if (navigator.onLine) {
+            dot.className = "status-dot online";
+            text.innerText = "Online (Pasar Blimbing)";
+            syncPendingData(); // Kirim data tertunda jika ada koneksi
+        } else {
+            dot.className = "status-dot offline";
+            text.innerText = "Mode Offline";
+        }
+    }
+
+    function loadDataProduk() {
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
                 produk = res.produk;
-                let s = document.getElementById('pilihBarang');
-                s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
-                produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
-
-                hitungRekap(res.transaksi);
+                // Simpan ke memori HP (localStorage) sebagai cadangan offline
+                localStorage.setItem('woll_fish_produk', JSON.stringify(produk));
+                localStorage.setItem('woll_fish_transaksi', JSON.stringify(res.transaksi));
+                
+                renderProdukDanRekap(res.produk, res.transaksi);
+            })
+            .catch(() => {
+                // Jika gagal fetch (offline), ambil dari memori HP terakhir
+                let cachedProduk = localStorage.getItem('woll_fish_produk');
+                let cachedTransaksi = localStorage.getItem('woll_fish_transaksi');
+                if (cachedProduk) {
+                    renderProdukDanRekap(JSON.parse(cachedProduk), cachedTransaksi ? JSON.parse(cachedTransaksi) : []);
+                    showToast("⚠️ Mode Offline: Menggunakan Data Tersimpan");
+                } else {
+                    alert("Gagal memuat data awal. Pastikan pernah dibuka saat online minimal sekali.");
+                }
             });
-    };
+    }
+
+    function renderProdukDanRekap(listProduk, listTransaksi) {
+        produk = listProduk;
+        let s = document.getElementById('pilihBarang');
+        s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
+        produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
+
+        hitungRekap(listTransaksi);
+    }
 
     function toggleRekap() {
         let overlay = document.getElementById('rekapOverlay');
@@ -192,7 +241,7 @@
         let t = document.getElementById('toast');
         t.innerText = pesan;
         t.classList.add('show');
-        setTimeout(() => { t.classList.remove('show'); }, 1500);
+        setTimeout(() => { t.classList.remove('show'); }, 2000);
     }
 
     function simpanTransaksi() {
@@ -205,6 +254,17 @@
             return;
         }
 
+        let p = produk[idx];
+        let transaksiBaru = {
+            tanggal: new Date().toISOString().split('T')[0],
+            namaBarang: p.nama,
+            modalKg: p.modalKg,
+            qty: qty,
+            satuan: document.getElementById('satuan').value,
+            totalOmzet: totalJual,
+            laba: totalJual - ((document.getElementById('satuan').value === "Ons" ? qty / 10 : qty) * p.modalKg)
+        };
+
         let btn = document.getElementById('btnSimpan');
         let txt = document.getElementById('btnText');
         let spin = document.getElementById('btnSpinner');
@@ -213,32 +273,51 @@
         txt.style.display = "none";
         spin.style.display = "block";
 
-        let p = produk[idx];
-        fetch(WEB_APP_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                namaBarang: p.nama,
-                modalKg: p.modalKg,
-                qty: qty,
-                satuan: document.getElementById('satuan').value,
-                totalOmzet: totalJual
-            })
-        }).then(r => r.json()).then(res => {
-            if(res.status === "OK") {
-                showToast("✨ Transaksi Berhasil!");
-                setTimeout(() => { location.reload(); }, 1000);
-            } else {
-                showToast("❌ Gagal menyimpan.");
-                btn.disabled = false;
-                txt.style.display = "inline";
-                spin.style.display = "none";
-            }
-        }).catch(() => {
-            showToast("❌ Jaringan bermasalah.");
-            btn.disabled = false;
-            txt.style.display = "inline";
-            spin.style.display = "none";
-        });
+        if (navigator.onLine) {
+            // Jika Online, langsung kirim ke server
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(transaksiBaru)
+            }).then(r => r.json()).then(res => {
+                selesaiSimpan();
+            }).catch(() => {
+                simpanKeAntreanOffline(transaksiBaru);
+            });
+        } else {
+            // Jika Offline, simpan ke antrean memori HP
+            simpanKeAntreanOffline(transaksiBaru);
+        }
+    }
+
+    function simpanKeAntreanOffline(data) {
+        let pending = JSON.parse(localStorage.getItem('woll_fish_pending') || '[]');
+        pending.push(data);
+        localStorage.setItem('woll_fish_pending', JSON.stringify(pending));
+        
+        showToast("💾 Tersimpan Offline di HP!");
+        setTimeout(() => { location.reload(); }, 1000);
+    }
+
+    function selesaiSimpan() {
+        showToast("✨ Transaksi Berhasil Disimpan!");
+        setTimeout(() => { location.reload(); }, 1000);
+    }
+
+    function syncPendingData() {
+        let pending = JSON.parse(localStorage.getItem('woll_fish_pending') || '[]');
+        if (pending.length > 0) {
+            showToast("🔄 Mengirim data offline ke server...");
+            // Kirim data yang sempat tertunda satu persatu
+            let item = pending.shift();
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(item)
+            }).then(() => {
+                localStorage.setItem('woll_fish_pending', JSON.stringify(pending));
+                if (pending.length > 0) syncPendingData(); // Lanjut kirim sisa data
+                else showToast("✅ Semua data offline tersinkron!");
+            }).catch(() => {});
+        }
     }
 </script>
 </body>
