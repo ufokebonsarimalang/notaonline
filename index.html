@@ -16,6 +16,14 @@
         .brand h1 { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
         .brand span { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         
+        .header-right { display: flex; align-items: center; gap: 8px; }
+
+        /* Indikator Online / Offline */
+        .status-dot-container { display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 8px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #475569; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; transition: 0.3s; }
+        .status-dot.online { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
+        .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+
         .privacy-pill { background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s; }
         .privacy-pill:active { background: #e2e8f0; transform: scale(0.96); }
 
@@ -29,7 +37,7 @@
         .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
 
-        /* Tombol Aksi Tepat di Bawah Harga Jual */
+        /* Tombol Aksi */
         .btn-main { width: 100%; padding: 18px; background: #0ea5e9; color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
         .btn-main:active { transform: scale(0.98); background: #0284c7; }
         .btn-main:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; }
@@ -64,9 +72,17 @@
             <h1>WOLL FISH</h1>
             <span>Pasar Blimbing</span>
         </div>
-        <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
-            <span id="privacyIcon">👁️</span> <span id="privacyText">Laba</span>
-        </button>
+        <div class="header-right">
+            <!-- Indikator Online/Offline -->
+            <div class="status-dot-container">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Cek...</span>
+            </div>
+            <!-- Tombol Laba -->
+            <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
+                <span id="privacyIcon">👁️</span> <span id="privacyText">Laba</span>
+            </button>
+        </div>
     </div>
 
     <!-- Input Form -->
@@ -125,11 +141,35 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
+    const WEB_APP_URL = "URL_WEB_APP_ANDA_DISINI";
     let produk = [];
     let rekapBuka = false;
 
     window.onload = () => {
+        cekKoneksiInternet();
+        muatData();
+        // Deteksi status koneksi otomatis secara berkala
+        window.addEventListener('online', updateStatusKoneksi);
+        window.addEventListener('offline', updateStatusKoneksi);
+    };
+
+    function updateStatusKoneksi() {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        if (navigator.onLine) {
+            dot.className = "status-dot online";
+            text.innerText = "Online";
+        } else {
+            dot.className = "status-dot offline";
+            text.innerText = "Offline";
+        }
+    }
+
+    function cekKoneksiInternet() {
+        updateStatusKoneksi();
+    }
+
+    function muatData() {
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
@@ -143,12 +183,18 @@
                 if(res.transaksi) {
                     hitungRekap(res.transaksi);
                 }
+                
+                // Jika berhasil ambil data, pastikan status online menyala terang
+                document.getElementById('statusDot').className = "status-dot online";
+                document.getElementById('statusText').innerText = "Online";
             })
             .catch(err => {
                 console.error(err);
                 document.getElementById('pilihBarang').innerHTML = '<option value="">Gagal memuat data ikan</option>';
+                document.getElementById('statusDot').className = "status-dot offline";
+                document.getElementById('statusText').innerText = "Offline";
             });
-    };
+    }
 
     function toggleRekap() {
         rekapBuka = !rekapBuka;
@@ -168,13 +214,26 @@
     }
 
     function hitungRekap(transaksi) {
-        const today = new Date().toISOString().split('T')[0];
-        const currentMonth = today.substring(0, 7);
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        
+        const todayStr = `${year}-${month}-${day}`;
+        const currentMonthStr = `${year}-${month}`;
 
         let hO = 0, hL = 0, bO = 0, bL = 0;
         transaksi.forEach(t => {
-            if (t.tanggal === today) { hO += Number(t.omzet || 0); hL += Number(t.laba || 0); }
-            if (t.tanggal && t.tanggal.startsWith(currentMonth)) { bO += Number(t.omzet || 0); bL += Number(t.laba || 0); }
+            let tglRaw = String(t.tanggal || "").split('T')[0];
+
+            if (tglRaw === todayStr) { 
+                hO += Number(t.omzet || 0); 
+                hL += Number(t.laba || 0); 
+            }
+            if (tglRaw.startsWith(currentMonthStr)) { 
+                bO += Number(t.omzet || 0); 
+                bL += Number(t.laba || 0); 
+            }
         });
 
         document.getElementById('hOmzet').innerText = "Rp " + hO.toLocaleString('id-ID');
