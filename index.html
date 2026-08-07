@@ -1,67 +1,239 @@
-const SS_ID = "MASUKKAN_ID_SPREADSHEET_ANDA_DI_SINI"; 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir Toko Ikan - UFO Kebonsari</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background: #e2e8f0; padding: 16px; margin: 0; color: #1e293b; }
+        .container { max-width: 420px; margin: auto; background: #ffffff; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #cbd5e1; }
+        
+        .store-header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 12px; margin-bottom: 16px; }
+        .store-name { font-size: 16px; font-weight: 900; letter-spacing: 1px; color: #0f172a; margin: 0; }
+        .store-address { font-size: 11px; color: #64748b; margin: 2px 0; }
+        .store-date { font-size: 10px; color: #64748b; margin-top: 6px; }
 
-function doGet(e) {
-  try {
-    var ss = SpreadsheetApp.openById(SS_ID);
-    var sheetProduk = ss.getSheetByName("Produk");
-    var dataProduk = sheetProduk.getDataRange().getValues();
+        .form-group { margin-bottom: 12px; font-family: 'Inter', sans-serif; }
+        label { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 13px; outline: none; }
+        input:focus, select:focus { border-color: #6d28d9; box-shadow: 0 0 0 3px rgba(109,40,217,0.1); }
+
+        .row-group { display: flex; gap: 8px; }
+        .row-group > div { flex: 1; }
+
+        .receipt-preview { background: #f8fafc; border: 1px dashed #94a3b8; padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 12px; }
+        .receipt-title { font-weight: bold; text-align: center; margin-bottom: 8px; font-size: 13px; color: #334155; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .receipt-total { border-top: 1px solid #cbd5e1; margin-top: 8px; padding-top: 8px; font-weight: bold; display: flex; justify-content: space-between; font-size: 14px; color: #0f172a; }
+
+        .btn-container { display: flex; gap: 8px; margin-top: 16px; font-family: 'Inter', sans-serif; }
+        .btn { flex: 1; padding: 12px 8px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 11px; text-transform: uppercase; }
+        .btn-save { background: #475569; color: white; }
+        .btn-wa { background: #25d366; color: white; }
+
+        .spinner { display: none; width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin: auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="store-header">
+        <h2 class="store-name">TOKO IKAN KEBONSARI</h2>
+        <p class="store-address">UFO Kebonsari - Malang</p>
+        <p class="store-date" id="waktuTransaksi">-</p>
+    </div>
+
+    <div class="form-group">
+        <label>Nama Customer</label>
+        <input type="text" id="namaCust" placeholder="Nama Pembeli">
+    </div>
     
-    var produk = [];
-    for (var i = 1; i < dataProduk.length; i++) {
-      if (dataProduk[i][0]) {
-        produk.push({
-          nama: String(dataProduk[i][0]),
-          modalKg: Number(dataProduk[i][1]) || 0, // Harga modal per 1 Kg
-          jualStandar: Number(dataProduk[i][2]) || 0 // Patokan harga jual
-        });
-      }
+    <div class="form-group">
+        <label>No. WhatsApp Customer</label>
+        <input type="text" id="noWa" placeholder="08xxxxxxxxxx">
+    </div>
+
+    <div class="form-group">
+        <label>Pilih Ikan</label>
+        <select id="pilihBarang" onchange="setDataBarang()">
+            <option value="|0|0">-- Pilih Ikan --</option>
+        </select>
+    </div>
+
+    <div class="row-group">
+        <div class="form-group">
+            <label>Jumlah Beli (Qty)</label>
+            <input type="number" id="qty" value="3" min="0.1" step="0.1" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Satuan</label>
+            <select id="satuan" onchange="updatePreview()">
+                <option value="Ons">Ons</option>
+                <option value="Kg">Kg</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Harga Jual per Satuan (Rp)</label>
+        <input type="number" id="hargaJual" placeholder="0" oninput="updatePreview()">
+    </div>
+
+    <div class="receipt-preview">
+        <div class="receipt-title">STRUK PENJUALAN IKAN</div>
+        <div class="receipt-row">
+            <span id="prevBarang">-</span>
+            <span id="prevSubtotal">Rp 0</span>
+        </div>
+        <div class="receipt-total">
+            <span>TOTAL:</span>
+            <span id="prevTotal">Rp 0</span>
+        </div>
+    </div>
+
+    <div class="btn-container">
+        <button type="button" class="btn btn-save" id="btnSave" onclick="prosesTransaksi(false)">
+            <span id="txtSave">Simpan Saja</span>
+            <div class="spinner" id="spinSave"></div>
+        </button>
+        <button type="button" class="btn btn-wa" id="btnWa" onclick="prosesTransaksi(true)">
+            <span id="txtWa">Simpan & Kirim WA</span>
+            <div class="spinner" id="spinWa"></div>
+        </button>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "URL_WEB_APP_ANDA_DISINI";
+    let listProdukGlobal = [];
+
+    window.onload = function() {
+        const now = new Date();
+        document.getElementById('waktuTransaksi').innerText = now.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+        
+        fetch(WEB_APP_URL)
+            .then(r => r.json())
+            .then(res => {
+                listProdukGlobal = res.produk;
+                let select = document.getElementById('pilihBarang');
+                res.produk.forEach((p, idx) => {
+                    select.innerHTML += `<option value="${idx}">${p.nama} (Modal Rp ${p.modalKg.toLocaleString('id-ID')}/Kg)</option>`;
+                });
+            }).catch(() => {
+                alert("Gagal memuat data produk.");
+            });
+    };
+
+    function setDataBarang() {
+        let idx = document.getElementById('pilihBarang').value;
+        if(idx !== "") {
+            let p = listProdukGlobal[idx];
+            // Jika ada harga jual standar, set otomatis, jika tidak biarkan kosong atau isi 0
+            document.getElementById('hargaJual').value = p.jualStandar > 0 ? p.jualStandar : "";
+        }
+        updatePreview();
     }
-    
-    return keluarJSON({ status: "success", produk: produk });
-  } catch(err) {
-    return keluarJSON({ status: "error", message: err.toString() });
-  }
-}
 
-function doPost(e) {
-  try {
-    var ss = SpreadsheetApp.openById(SS_ID);
-    var sheetTransaksi = ss.getSheetByName("Transaksi");
-    
-    var data = JSON.parse(e.postData.contents);
-    
-    // Konversi satuan ke Kg untuk hitung modal
-    // Jika satuan 'Ons', maka Qty dibagi 10. Jika 'Kg', Qty tetap.
-    let qtyKg = data.satuan === "Ons" ? data.qty / 10 : data.qty;
-    
-    let totalModal = qtyKg * data.modalKg;
-    let totalOmzet = data.totalOmzet;
-    let totalMargin = totalOmzet - totalModal; // Keuntungan bersih
-    
-    // Simpan ke tab Transaksi sesuai urutan kolom baru
-    sheetTransaksi.appendRow([
-      new Date(),                     // Tanggal & Waktu
-      data.namaCust,                  // Nama Customer
-      data.noWa,                      // No WA
-      data.namaBarang,                // Nama Barang
-      data.qty + " " + data.satuan,   // Jumlah Beli (Contoh: 3 Ons)
-      totalOmzet,                     // Total Omzet
-      totalModal,                     // Total Modal
-      totalMargin                     // Margin (Keuntungan)
-    ]);
-    
-    return keluarJSON({ status: "OK", margin: totalMargin });
-  } catch(err) {
-    return keluarJSON({ status: "ERROR", message: err.toString() });
-  }
-}
+    function updatePreview() {
+        let idx = document.getElementById('pilihBarang').value;
+        let qty = parseFloat(document.getElementById('qty').value) || 0;
+        let satuan = document.getElementById('satuan').value;
+        let hargaJual = parseFloat(document.getElementById('hargaJual').value) || 0;
+        
+        let namaBarang = idx !== "" ? listProdukGlobal[idx].nama : "-";
+        let total = qty * hargaJual;
 
-function keluarJSON(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+        document.getElementById('prevBarang').innerText = namaBarang !== "-" ? `${namaBarang} (${qty} ${satuan})` : "-";
+        document.getElementById('prevSubtotal').innerText = "Rp " + total.toLocaleString('id-ID');
+        document.getElementById('prevTotal').innerText = "Rp " + total.toLocaleString('id-ID');
+    }
 
-function doOptions(e) {
-  return ContentService.createTextOutput("")
-    .setMimeType(ContentService.MimeType.TEXT);
-}
+    function prosesTransaksi(kirimWA) {
+        let nama = document.getElementById('namaCust').value.trim();
+        let wa = document.getElementById('noWa').value.trim();
+        let idx = document.getElementById('pilihBarang').value;
+        let qty = parseFloat(document.getElementById('qty').value);
+        let satuan = document.getElementById('satuan').value;
+        let hargaJual = parseFloat(document.getElementById('hargaJual').value);
+
+        if (!nama || idx === "" || isNaN(hargaJual)) {
+            alert("Harap lengkapi nama customer, pilih ikan, dan harga jual!");
+            return;
+        }
+
+        if (kirimWA && !wa) {
+            alert("No WhatsApp wajib diisi jika ingin kirim nota ke WA!");
+            return;
+        }
+
+        let namaBarang = listProdukGlobal[idx].nama;
+        let modalKg = listProdukGlobal[idx].modalKg;
+        let totalOmzet = qty * hargaJual;
+
+        const btnTarget = kirimWA ? document.getElementById('btnWa') : document.getElementById('btnSave');
+        const txtTarget = kirimWA ? document.getElementById('txtWa') : document.getElementById('txtSave');
+        const spinTarget = kirimWA ? document.getElementById('spinWa') : document.getElementById('spinSave');
+
+        btnTarget.disabled = true;
+        txtTarget.style.display = "none";
+        spinTarget.style.display = "block";
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                namaCust: nama,
+                noWa: wa || "-",
+                namaBarang: namaBarang,
+                qty: qty,
+                satuan: satuan,
+                modalKg: modalKg,
+                totalOmzet: totalOmzet
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            btnTarget.disabled = false;
+            txtTarget.style.display = "block";
+            spinTarget.style.display = "none";
+
+            if (res.status === "OK") {
+                if (kirimWA) {
+                    let formatWaktu = document.getElementById('waktuTransaksi').innerText;
+                    let pesanWA = `*TOKO IKAN KEBONSARI*\n` +
+                                  `-----------------------------------\n` +
+                                  `📅 Tgl: ${formatWaktu}\n` +
+                                  `👤 Cust: *${nama}*\n` +
+                                  `-----------------------------------\n` +
+                                  `*RINCIAN BELANJA:*\n` +
+                                  `• ${namaBarang} (${qty} ${satuan}) - Rp ${totalOmzet.toLocaleString('id-ID')}\n` +
+                                  `-----------------------------------\n` +
+                                  `*TOTAL TAGIHAN : Rp ${totalOmzet.toLocaleString('id-ID')}*\n` +
+                                  `-----------------------------------\n` +
+                                  `Terima kasih telah berbelanja! 🙏`;
+
+                    let cleanWa = wa.startsWith('0') ? '62' + wa.substring(1) : wa;
+                    window.open(`https://wa.me/${cleanWa}?text=` + encodeURIComponent(pesanWA), '_blank');
+                } else {
+                    alert("Transaksi berhasil disimpan!");
+                }
+
+                document.getElementById('namaCust').value = "";
+                document.getElementById('noWa').value = "";
+                document.getElementById('qty').value = "3";
+                document.getElementById('hargaJual').value = "";
+                document.getElementById('pilihBarang').selectedIndex = 0;
+                updatePreview();
+            } else {
+                alert("Gagal menyimpan transaksi.");
+            }
+        }).catch(() => {
+            btnTarget.disabled = false;
+            txtTarget.style.display = "block";
+            spinTarget.style.display = "none";
+            alert("Koneksi server gagal.");
+        });
+    }
+</script>
+</body>
+</html>
