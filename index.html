@@ -3,111 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kasir WOL FISH</title>
+    <title>WOLL FISH POS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Desain Full Screen */
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; padding: 0; margin: 0; color: #1e293b; height: 100vh; }
-        .container { width: 100vw; min-height: 100vh; background: #fff; padding: 20px; box-sizing: border-box; }
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #0f172a; margin: 0; padding: 0; color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
         
-        /* Font Besar & Jelas */
-        h2 { font-size: 24px; font-weight: 900; margin: 0; text-align: center; }
-        .subtitle { font-size: 14px; text-align: center; color: #64748b; margin-bottom: 20px; }
+        .app-container { width: 100%; max-width: 480px; min-height: 100vh; background: #ffffff; color: #1e293b; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
         
-        .label { font-size: 16px; font-weight: 700; margin-top: 20px; color: #334155; }
-        select, input { width: 100%; padding: 18px; margin-top: 8px; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 18px; box-sizing: border-box; background: #f8fafc; }
+        @media (min-width: 481px) {
+            .app-container { min-height: 90vh; border-radius: 24px; }
+        }
+
+        /* Header Modern */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; }
+        .brand h1 { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
+        .brand span { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         
-        .btn { width: 100%; padding: 22px; background: #10b981; color: white; border: none; border-radius: 12px; font-weight: 900; margin-top: 30px; font-size: 20px; cursor: pointer; }
+        .privacy-pill { background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s; }
+        .privacy-pill:active { background: #e2e8f0; transform: scale(0.96); }
+
+        /* Form Controls */
+        .form-group { margin-bottom: 20px; }
+        label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
         
-        /* Privasi Tombol */
-        .privacy-btn { width: 100%; padding: 12px; background: #e2e8f0; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; margin-top: 20px; }
-        
-        .rekap-panel { display: none; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 20px; margin-top: 20px; font-size: 16px; }
-        .rekap-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; }
-        .highlight { color: #10b981; }
+        select, input { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 16px; font-weight: 600; color: #0f172a; background: #f8fafc; outline: none; transition: 0.2s; }
+        select:focus, input:focus { border-color: #0ea5e9; background: #fff; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
+
+        .row { display: flex; gap: 12px; }
+        .row > div { flex: 1; }
+
+        /* Tombol Aksi Utama dengan Spinner Khusus */
+        .btn-main { width: 100%; padding: 18px; background: #0ea5e9; color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: auto; }
+        .btn-main:active { transform: scale(0.98); background: #0284c7; }
+        .btn-main:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; }
+
+        /* Animasi Spinner Khusus Tombol */
+        .spinner { display: none; width: 20px; height: 20px; border: 3px solid #ffffff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast Modern Pengganti Alert */
+        .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; display: flex; align-items: center; gap: 8px; }
+        .toast-modern.show { transform: translateX(-50%) translateY(0); }
+
+        /* Panel Laporan Rahasia */
+        .rekap-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-top: 20px; display: none; animation: slideUp 0.3s ease; }
+        .rekap-card.open { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .rekap-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 15px; font-weight: 700; color: #334155; }
+        .rekap-item:last-child { margin-bottom: 0; }
+        .rekap-val { color: #10b981; font-weight: 800; font-size: 16px; }
+        .divider { height: 1px; background: #e2e8f0; margin: 12px 0; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>WOL FISH</h2>
-    <div class="subtitle">Pasar Blimbing - Malang</div>
-    
-    <label class="label">PILIH IKAN</label>
-    <select id="pilihBarang" style="font-size: 18px;"></select>
+<div class="toast-modern" id="toast">✨ Transaksi Berhasil Disimpan!</div>
 
-    <div style="display:flex; gap:15px;">
-        <div style="flex:1;">
-            <label class="label">JUMLAH</label>
-            <input type="number" id="qty" value="1" step="0.1">
+<div class="app-container">
+    <div>
+        <!-- Header -->
+        <div class="header">
+            <div class="brand">
+                <h1>WOLL FISH</h1>
+                <span>Pasar Blimbing</span>
+            </div>
+            <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
+                <span id="privacyIcon">👁️</span> <span id="privacyText">Laba</span>
+            </button>
         </div>
-        <div style="flex:1;">
-            <label class="label">SATUAN</label>
-            <select id="satuan">
-                <option value="Ons">Ons</option>
-                <option value="Kg">Kg</option>
-            </select>
+
+        <!-- Input Form -->
+        <div class="form-group">
+            <label>Pilih Ikan</label>
+            <select id="pilihBarang"></select>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label>Jumlah</label>
+                <input type="number" id="qty" value="1" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Satuan</label>
+                <select id="satuan">
+                    <option value="Ons">Ons</option>
+                    <option value="Kg">Kg</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Harga Jual (Total Pembeli)</label>
+            <input type="number" id="totalJual" placeholder="Contoh: 10000">
+        </div>
+
+        <!-- Panel Rekap Rahasia -->
+        <div class="rekap-card" id="rekapPanel">
+            <div class="rekap-item">
+                <span>Omzet Hari Ini:</span>
+                <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
+            </div>
+            <div class="rekap-item">
+                <span>Laba Hari Ini:</span>
+                <span class="rekap-val" id="hLaba">Rp 0</span>
+            </div>
+            <div class="divider"></div>
+            <div class="rekap-item">
+                <span>Omzet Bulan Ini:</span>
+                <span id="bOmzet" style="color: #0f172a;">Rp 0</span>
+            </div>
+            <div class="rekap-item">
+                <span>Laba Bulan Ini:</span>
+                <span class="rekap-val" id="bLaba">Rp 0</span>
+            </div>
         </div>
     </div>
 
-    <label class="label">HARGA JUAL (TOTAL)</label>
-    <input type="number" id="totalJual" placeholder="Masukkan Rp...">
-
-    <button class="btn" id="btnSimpan" onclick="simpanTransaksi()">💾 SIMPAN TRANSAKSI</button>
-
-    <button class="privacy-btn" onclick="toggleRekap()" id="btnPrivacy">👁️ LIHAT LABA HARI INI</button>
-
-    <div class="rekap-panel" id="rekapPanel">
-        <div class="rekap-row"><span>Omzet Hari Ini:</span> <span id="hOmzet">Rp 0</span></div>
-        <div class="rekap-row highlight"><span>Laba Bersih:</span> <span id="hLaba">Rp 0</span></div>
-        <hr>
-        <div class="rekap-row"><span>Omzet Bulan Ini:</span> <span id="bOmzet">Rp 0</span></div>
-        <div class="rekap-row highlight"><span>Laba Bersih:</span> <span id="bLaba">Rp 0</span></div>
-    </div>
+    <!-- Tombol Simpan dengan Spinner Khusus -->
+    <button class="btn-main" id="btnSimpan" onclick="simpanTransaksi()">
+        <span id="btnText">Simpan Transaksi</span>
+        <div class="spinner" id="btnSpinner"></div>
+    </button>
 </div>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
     let produk = [];
+    let rekapBuka = false;
 
-    // Fungsi fetch data tetap sama seperti sebelumnya...
     window.onload = () => {
-        fetch(WEB_APP_URL).then(r => r.json()).then(res => {
-            produk = res.produk;
-            let s = document.getElementById('pilihBarang');
-            produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
-            
-            // Hitung Rekap
-            const today = new Date().toISOString().split('T')[0];
-            const currentMonth = today.substring(0, 7);
-            let hO=0, hL=0, bO=0, bL=0;
-            res.transaksi.forEach(t => {
-                if(t.tanggal === today) { hO+=t.omzet; hL+=t.laba; }
-                if(t.tanggal.startsWith(currentMonth)) { bO+=t.omzet; bL+=t.laba; }
+        fetch(WEB_APP_URL)
+            .then(r => r.json())
+            .then(res => {
+                produk = res.produk;
+                let s = document.getElementById('pilihBarang');
+                s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
+                produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
+
+                hitungRekap(res.transaksi);
             });
-            document.getElementById('hOmzet').innerText = "Rp " + hO.toLocaleString();
-            document.getElementById('hLaba').innerText = "Rp " + hLaba.toLocaleString();
-            document.getElementById('bOmzet').innerText = "Rp " + bO.toLocaleString();
-            document.getElementById('bLaba').innerText = "Rp " + bLaba.toLocaleString();
-        });
     };
 
     function toggleRekap() {
-        let p = document.getElementById('rekapPanel');
-        p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+        rekapBuka = !rekapBuka;
+        let panel = document.getElementById('rekapPanel');
+        let icon = document.getElementById('privacyIcon');
+        let text = document.getElementById('privacyText');
+
+        if(rekapBuka) {
+            panel.classList.add('open');
+            icon.innerText = "🔒";
+            text.innerText = "Tutup";
+        } else {
+            panel.classList.remove('open');
+            icon.innerText = "👁️";
+            text.innerText = "Laba";
+        }
+    }
+
+    function hitungRekap(transaksi) {
+        const today = new Date().toISOString().split('T')[0];
+        const currentMonth = today.substring(0, 7);
+
+        let hO = 0, hL = 0, bO = 0, bL = 0;
+        transaksi.forEach(t => {
+            if (t.tanggal === today) { hO += t.omzet; hL += t.laba; }
+            if (t.tanggal.startsWith(currentMonth)) { bO += t.omzet; bL += t.laba; }
+        });
+
+        document.getElementById('hOmzet').innerText = "Rp " + hO.toLocaleString('id-ID');
+        document.getElementById('hLaba').innerText = "Rp " + hL.toLocaleString('id-ID');
+        document.getElementById('bOmzet').innerText = "Rp " + bO.toLocaleString('id-ID');
+        document.getElementById('bLaba').innerText = "Rp " + bL.toLocaleString('id-ID');
+    }
+
+    function showToast(pesan) {
+        let t = document.getElementById('toast');
+        t.innerText = pesan;
+        t.classList.add('show');
+        setTimeout(() => { t.classList.remove('show'); }, 1500);
     }
 
     function simpanTransaksi() {
-        // ... (fungsi simpan sama seperti sebelumnya)
         let idx = document.getElementById('pilihBarang').value;
         let qty = parseFloat(document.getElementById('qty').value);
         let totalJual = parseFloat(document.getElementById('totalJual').value);
-        if(idx === "" || isNaN(qty) || isNaN(totalJual)) return alert("Isi semua data!");
-        
+
+        if (idx === "" || isNaN(qty) || isNaN(totalJual)) {
+            showToast("⚠️ Lengkapi data terlebih dahulu!");
+            return;
+        }
+
+        let btn = document.getElementById('btnSimpan');
+        let txt = document.getElementById('btnText');
+        let spin = document.getElementById('btnSpinner');
+
+        btn.disabled = true;
+        txt.style.display = "none";
+        spin.style.display = "block";
+
         let p = produk[idx];
         fetch(WEB_APP_URL, {
             method: 'POST',
-            body: JSON.stringify({ namaBarang: p.nama, modalKg: p.modalKg, qty: qty, satuan: document.getElementById('satuan').value, totalOmzet: totalJual })
-        }).then(() => { alert("Tersimpan!"); location.reload(); });
+            body: JSON.stringify({
+                namaBarang: p.nama,
+                modalKg: p.modalKg,
+                qty: qty,
+                satuan: document.getElementById('satuan').value,
+                totalOmzet: totalJual
+            })
+        }).then(r => r.json()).then(res => {
+            if(res.status === "OK") {
+                showToast("✨ Transaksi Berhasil!");
+                setTimeout(() => { location.reload(); }, 1000);
+            } else {
+                showToast("❌ Gagal menyimpan.");
+                btn.disabled = false;
+                txt.style.display = "inline";
+                spin.style.display = "none";
+            }
+        }).catch(() => {
+            showToast("❌ Jaringan bermasalah.");
+            btn.disabled = false;
+            txt.style.display = "inline";
+            spin.style.display = "none";
+        });
     }
 </script>
 </body>
