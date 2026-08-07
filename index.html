@@ -46,8 +46,11 @@
         </div>
     </div>
 
-    <label class="label">Harga Jual (Total Pembeli)</label>
-    <input type="number" id="totalJual" placeholder="Masukkan total harga (Rp)">
+    <label class="label">Harga Jual (Total dari Pembeli)</label>
+    <input type="number" id="totalJual" placeholder="Contoh: 10000">
+
+    <label class="label">Modal / HPP (Perkiraan Modal Ikan Tersebut)</label>
+    <input type="number" id="totalModal" placeholder="Contoh: 6500">
 
     <button class="btn" onclick="simpanTransaksi()">Simpan Transaksi 💾</button>
 
@@ -69,7 +72,7 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
+    const WEB_APP_URL = "URL_WEB_APP_ANDA_DISINI";
     let produk = [];
 
     window.onload = () => {
@@ -114,9 +117,10 @@
         let idx = document.getElementById('pilihBarang').value;
         let qty = parseFloat(document.getElementById('qty').value);
         let totalJual = parseFloat(document.getElementById('totalJual').value);
+        let totalModal = parseFloat(document.getElementById('totalModal').value);
 
-        if (idx === "" || isNaN(qty) || isNaN(totalJual)) {
-            alert("Harap pilih ikan dan isi harga jual dengan benar!");
+        if (idx === "" || isNaN(qty) || isNaN(totalJual) || isNaN(totalModal)) {
+            alert("Harap lengkapi semua kolom dengan benar!");
             return;
         }
 
@@ -125,10 +129,10 @@
             method: 'POST',
             body: JSON.stringify({
                 namaBarang: p.nama,
-                modalKg: p.modalKg,
                 qty: qty,
                 satuan: document.getElementById('satuan').value,
-                totalOmzet: totalJual
+                totalOmzet: totalJual,
+                totalModal: totalModal
             })
         }).then(r => r.json()).then(res => {
             if(res.status === "OK") {
