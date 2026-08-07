@@ -51,10 +51,10 @@
         .rekap-card.open { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .rekap-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 15px; font-weight: 700; color: #334155; }
-        .rekap-item:last-child { margin-bottom: 0; }
+        .rekap-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 15px; font-weight: 700; color: #334155; }
         .rekap-val { color: #10b981; font-weight: 800; font-size: 16px; }
-        .divider { height: 1px; background: #e2e8f0; margin: 12px 0; }
+        .divider { height: 1px; background: #e2e8f0; margin: 16px 0; }
+        .periode-label { font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -99,24 +99,34 @@
             <input type="number" id="totalJual" placeholder="Contoh: 10000">
         </div>
 
-        <!-- Panel Rekap Rahasia -->
+        <!-- Panel Rekap Rahasia dengan Periode Tanggal -->
         <div class="rekap-card" id="rekapPanel">
-            <div class="rekap-item">
-                <span>Omzet Hari Ini:</span>
-                <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
+            <!-- Hari Ini -->
+            <div>
+                <div class="periode-label">Hari Ini <span id="teksTglHariIni" style="font-weight: 600; text-transform: none; color: #0ea5e9;"></span></div>
+                <div class="rekap-item">
+                    <span>Omzet:</span>
+                    <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
+                </div>
+                <div class="rekap-item">
+                    <span>Laba Bersih:</span>
+                    <span class="rekap-val" id="hLaba">Rp 0</span>
+                </div>
             </div>
-            <div class="rekap-item">
-                <span>Laba Hari Ini:</span>
-                <span class="rekap-val" id="hLaba">Rp 0</span>
-            </div>
+
             <div class="divider"></div>
-            <div class="rekap-item">
-                <span>Omzet Bulan Ini:</span>
-                <span id="bOmzet" style="color: #0f172a;">Rp 0</span>
-            </div>
-            <div class="rekap-item">
-                <span>Laba Bulan Ini:</span>
-                <span class="rekap-val" id="bLaba">Rp 0</span>
+
+            <!-- Bulan Ini -->
+            <div>
+                <div class="periode-label">Bulan Ini <span id="teksRentangBulan" style="font-weight: 600; text-transform: none; color: #0ea5e9;"></span></div>
+                <div class="rekap-item">
+                    <span>Omzet:</span>
+                    <span id="bOmzet" style="color: #0f172a;">Rp 0</span>
+                </div>
+                <div class="rekap-item">
+                    <span>Laba Bersih:</span>
+                    <span class="rekap-val" id="bLaba">Rp 0</span>
+                </div>
             </div>
         </div>
     </div>
@@ -134,6 +144,15 @@
     let rekapBuka = false;
 
     window.onload = () => {
+        // Tampilkan Tanggal & Rentang Bulan Otomatis
+        const now = new Date();
+        const tglSkrg = now.getDate();
+        const bulan = now.toLocaleString('id-ID', { month: 'long' });
+        
+        document.getElementById('teksTglHariIni').innerText = `(${tglSkrg} ${bulan})`;
+        document.getElementById('teksRentangBulan').innerText = `(1 s.d. ${tglSkrg} ${bulan})`;
+
+        // Ambil Data dari Backend Apps Script
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
