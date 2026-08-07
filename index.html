@@ -2,46 +2,69 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kasir WOL FISH - Pasar Blimbing</title>
     <style>
-        body { font-family: 'Arial', sans-serif; background: #f8fafc; padding: 10px; }
-        .container { max-width: 400px; margin: auto; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #0f172a; margin: 0 0 10px 0; font-size: 18px; }
-        .label { font-size: 12px; font-weight: bold; margin-top: 10px; display: block; }
-        select, input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: #0ea5e9; color: white; border: none; border-radius: 5px; font-weight: bold; margin-top: 15px; cursor: pointer; }
-        .rekap-box { background: #f1f5f9; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 13px; }
+        body { font-family: 'Arial', sans-serif; background: #f8fafc; padding: 10px; color: #1e293b; }
+        .container { max-width: 400px; margin: auto; background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { text-align: center; color: #0f172a; margin: 0 0 4px 0; font-size: 16px; }
+        .subtitle { text-align: center; color: #64748b; font-size: 11px; margin-bottom: 14px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 8px; }
+        
+        .label { font-size: 11px; font-weight: bold; margin-top: 10px; display: block; color: #475569; text-transform: uppercase; }
+        select, input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; }
+        
+        .btn { width: 100%; padding: 12px; background: #0ea5e9; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 16px; cursor: pointer; font-size: 13px; text-transform: uppercase; }
+        .btn:active { background: #0284c7; }
+
+        .rekap-container { display: flex; gap: 8px; margin-top: 16px; }
+        .rekap-card { flex: 1; background: #f1f5f9; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 11px; }
+        .rekap-title { font-weight: bold; color: #0f172a; margin-bottom: 6px; text-align: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; text-transform: uppercase; }
+        .rekap-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .rekap-row.highlight { font-weight: bold; color: #16a34a; border-top: 1px solid #e2e8f0; padding-top: 4px; margin-top: 4px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>WOL FISH - Pasar Blimbing</h2>
+    <h2>WOL FISH</h2>
+    <div class="subtitle">Pasar Blimbing - Malang</div>
     
     <label class="label">Pilih Ikan</label>
-    <select id="pilihBarang" onchange="updateHarga()"></select>
+    <select id="pilihBarang"></select>
 
-    <div style="display:flex; gap:10px;">
+    <div style="display:flex; gap:8px;">
         <div style="flex:1;">
             <label class="label">Jumlah</label>
-            <input type="number" id="qty" value="1" step="0.1" oninput="updateTotal()">
+            <input type="number" id="qty" value="1" step="0.1">
         </div>
         <div style="flex:1;">
             <label class="label">Satuan</label>
-            <select id="satuan" onchange="updateTotal()">
+            <select id="satuan">
                 <option value="Ons">Ons</option>
                 <option value="Kg">Kg</option>
             </select>
         </div>
     </div>
 
-    <label class="label">Harga Jual (Total)</label>
-    <input type="number" id="totalJual" placeholder="Masukkan total harga">
+    <label class="label">Harga Jual (Total Pembeli)</label>
+    <input type="number" id="totalJual" placeholder="Masukkan total harga (Rp)">
 
-    <button class="btn" onclick="simpanTransaksi()">SIMPAN TRANSAKSI</button>
+    <button class="btn" onclick="simpanTransaksi()">Simpan Transaksi 💾</button>
 
-    <div class="rekap-box">
-        <b>Keuntungan Hari Ini: <span id="hariMargin">Rp 0</span></b>
+    <!-- 2 Kotak Rekap (Hari Ini & Bulan Ini) -->
+    <div class="rekap-container">
+        <div class="rekap-card">
+            <div class="rekap-title">Hari Ini</div>
+            <div class="rekap-row"><span>Omzet:</span> <span id="hOmzet">Rp 0</span></div>
+            <div class="rekap-row"><span>Modal:</span> <span id="hModal">Rp 0</span></div>
+            <div class="rekap-row highlight"><span>Untung:</span> <span id="hMargin">Rp 0</span></div>
+        </div>
+        <div class="rekap-card">
+            <div class="rekap-title">Bulan Ini</div>
+            <div class="rekap-row"><span>Omzet:</span> <span id="bOmzet">Rp 0</span></div>
+            <div class="rekap-row"><span>Modal:</span> <span id="bModal">Rp 0</span></div>
+            <div class="rekap-row highlight"><span>Untung:</span> <span id="bMargin">Rp 0</span></div>
+        </div>
     </div>
 </div>
 
@@ -50,29 +73,70 @@
     let produk = [];
 
     window.onload = () => {
-        fetch(WEB_APP_URL).then(r => r.json()).then(res => {
-            produk = res.produk;
-            let s = document.getElementById('pilihBarang');
-            produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
-            document.getElementById('hariMargin').innerText = "Rp " + res.transaksi.filter(t => t.tanggal === new Date().toISOString().split('T')[0]).reduce((a,b) => a + b.margin, 0).toLocaleString();
-        });
+        fetch(WEB_APP_URL)
+            .then(r => r.json())
+            .then(res => {
+                produk = res.produk;
+                let s = document.getElementById('pilihBarang');
+                s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
+                produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
+
+                hitungDanTampilkanRekap(res.transaksi);
+            });
     };
+
+    function hitungDanTampilkanRekap(transaksi) {
+        const today = new Date().toISOString().split('T')[0];
+        const currentMonth = today.substring(0, 7);
+
+        let hOmzet = 0, hModal = 0, hMargin = 0;
+        let bOmzet = 0, bModal = 0, bMargin = 0;
+
+        transaksi.forEach(t => {
+            if (t.tanggal === today) {
+                hOmzet += t.omzet; hModal += t.modal; hMargin += t.margin;
+            }
+            if (t.tanggal.startsWith(currentMonth)) {
+                bOmzet += t.omzet; bModal += t.modal; bMargin += t.margin;
+            }
+        });
+
+        document.getElementById('hOmzet').innerText = "Rp " + hOmzet.toLocaleString('id-ID');
+        document.getElementById('hModal').innerText = "Rp " + hModal.toLocaleString('id-ID');
+        document.getElementById('hMargin').innerText = "Rp " + hMargin.toLocaleString('id-ID');
+
+        document.getElementById('bOmzet').innerText = "Rp " + bOmzet.toLocaleString('id-ID');
+        document.getElementById('bModal').innerText = "Rp " + bModal.toLocaleString('id-ID');
+        document.getElementById('bMargin').innerText = "Rp " + bMargin.toLocaleString('id-ID');
+    }
 
     function simpanTransaksi() {
         let idx = document.getElementById('pilihBarang').value;
+        let qty = parseFloat(document.getElementById('qty').value);
+        let totalJual = parseFloat(document.getElementById('totalJual').value);
+
+        if (idx === "" || isNaN(qty) || isNaN(totalJual)) {
+            alert("Harap pilih ikan dan isi harga jual dengan benar!");
+            return;
+        }
+
         let p = produk[idx];
         fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({
                 namaBarang: p.nama,
                 modalKg: p.modalKg,
-                qty: parseFloat(document.getElementById('qty').value),
+                qty: qty,
                 satuan: document.getElementById('satuan').value,
-                totalOmzet: parseFloat(document.getElementById('totalJual').value)
+                totalOmzet: totalJual
             })
-        }).then(() => {
-            alert("Transaksi Tersimpan!");
-            location.reload();
+        }).then(r => r.json()).then(res => {
+            if(res.status === "OK") {
+                alert("Transaksi Berhasil Disimpan!");
+                location.reload();
+            } else {
+                alert("Gagal menyimpan.");
+            }
         });
     }
 </script>
