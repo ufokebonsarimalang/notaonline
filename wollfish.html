@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WOLL FISH POS</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- PWA Manifest & Tema -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0ea5e9">
-
     <style>
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
@@ -151,6 +146,17 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
+    
+    // Data produk cadangan (default) agar langsung bisa transaksi walau dibuka offline total tanpa internet
+    let produkDefault = [
+        { nama: "Ikan Lele", modalKg: 20000 },
+        { nama: "Ikan Nila", modalKg: 25000 },
+        { nama: "Ikan Mujair", modalKg: 23000 },
+        { nama: "Ikan Bandeng", modalKg: 22000 },
+        { nama: "Ikan Patin", modalKg: 19000 },
+        { nama: "Ikan Gurami", modalKg: 35000 }
+    ];
+
     let produk = [];
     let transaksiGlobal = [];
     let rekapBuka = false;
@@ -158,6 +164,8 @@
     window.onload = () => {
         tampilkanTanggalHariIni();
         updateStatusKoneksi();
+        
+        // Muat data cache lokal atau gunakan data cadangan jika memori masih kosong
         muatDataLocalCache();
         
         if (navigator.onLine) {
@@ -169,11 +177,6 @@
             sinkronisasiDanMuatServer();
         });
         window.addEventListener('offline', updateStatusKoneksi);
-
-        // Daftarkan PWA Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(() => {});
-        }
     };
 
     function tampilkanTanggalHariIni() {
@@ -204,7 +207,7 @@
     }
 
     function renderDropdownIkan(listProduk) {
-        produk = listProduk || [];
+        produk = listProduk && listProduk.length > 0 ? listProduk : produkDefault;
         let s = document.getElementById('pilihBarang');
         s.innerHTML = '<option value="">-- Pilih Ikan & Cek Modal --</option>';
         produk.forEach((p, i) => {
@@ -216,8 +219,16 @@
     function muatDataLocalCache() {
         const cachedProduk = localStorage.getItem('wollfish_produk_cache');
         const cachedTransaksi = localStorage.getItem('wollfish_transaksi_cache');
-        if (cachedProduk) { try { renderDropdownIkan(JSON.parse(cachedProduk)); } catch(e) {} }
-        if (cachedTransaksi) { try { transaksiGlobal = JSON.parse(cachedTransaksi); hitungRekap(transaksiGlobal); } catch(e) {} }
+        
+        if (cachedProduk) {
+            try { renderDropdownIkan(JSON.parse(cachedProduk)); } catch(e) { renderDropdownIkan(produkDefault); }
+        } else {
+            renderDropdownIkan(produkDefault); // Langsung isi pakai data default jika belum ada cache
+        }
+
+        if (cachedTransaksi) {
+            try { transaksiGlobal = JSON.parse(cachedTransaksi); hitungRekap(transaksiGlobal); } catch(e) {}
+        }
     }
 
     async function prosesAntreanOffline() {
@@ -242,8 +253,15 @@
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
-                if (res.produk) { localStorage.setItem('wollfish_produk_cache', JSON.stringify(res.produk)); renderDropdownIkan(res.produk); }
-                if (res.transaksi) { transaksiGlobal = res.transaksi; localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(res.transaksi)); hitungRekap(transaksiGlobal); }
+                if (res.produk && res.produk.length > 0) { 
+                    localStorage.setItem('wollfish_produk_cache', JSON.stringify(res.produk)); 
+                    renderDropdownIkan(res.produk); 
+                }
+                if (res.transaksi) { 
+                    transaksiGlobal = res.transaksi; 
+                    localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(res.transaksi)); 
+                    hitungRekap(transaksiGlobal); 
+                }
                 updateStatusKoneksi();
             })
             .catch(() => { updateStatusKoneksi(); });
@@ -321,7 +339,7 @@
             queue.push(payloadData);
             localStorage.setItem('wollfish_offline_queue', JSON.stringify(queue));
             updateStatusKoneksi();
-            showToast("⚠️ Offline: Tersimpan di HP.");
+            showToast("⚠️ Offline: Transaksi tersimpan di HP!");
             selesaiSimpanUI(btn, txt, spin);
             return;
         }
@@ -329,7 +347,7 @@
         fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payloadData) })
         .then(r => r.json())
         .then(res => {
-            if(res.status === "OK") { showToast("✨ Transaksi Berhasil!"); }
+            if(res.status === "OK") { showToast("✨ Transaksi Berhasil Disimpan!"); }
             else { 
                 let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
                 queue.push(payloadData);
