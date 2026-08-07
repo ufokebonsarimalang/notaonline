@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WOLL FISH POS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- PWA Manifest & Tema -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0ea5e9">
+
+    <style>
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.75)), 
+                        url('https://img.freepik.com/free-vector/underwater-background-with-cute-cartoon-fish-sea-animals_1284-42996.jpg') no-repeat center center fixed; 
+            background-size: cover;
+            margin: 0; 
+            padding: 16px; 
+            color: #f8fafc; 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        
+        .app-container { width: 100%; max-width: 480px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); color: #1e293b; border-radius: 24px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.2); }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; }
+        .brand h1 { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
+        .brand span { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .header-right { display: flex; align-items: center; gap: 8px; }
+
+        .status-dot-container { display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 8px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #475569; position: relative; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; transition: 0.3s; }
+        .status-dot.online { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
+        .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+        
+        .sync-badge { background: #f59e0b; color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 10px; display: none; }
+
+        .privacy-pill { background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s; }
+        .privacy-pill:active { background: #e2e8f0; transform: scale(0.96); }
+
+        .form-group { margin-bottom: 18px; }
+        label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
+        
+        select, input { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 16px; font-weight: 600; color: #0f172a; background: #f8fafc; outline: none; transition: 0.2s; }
+        select:focus, input:focus { border-color: #0ea5e9; background: #fff; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
+
+        .row { display: flex; gap: 12px; }
+        .row > div { flex: 1; }
+
+        .btn-main { width: 100%; padding: 18px; background: #0ea5e9; color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+        .btn-main:active { transform: scale(0.98); background: #0284c7; }
+        .btn-main:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; }
+
+        .spinner { display: none; width: 20px; height: 20px; border: 3px solid #ffffff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; display: flex; align-items: center; gap: 8px; border: 2px solid #334155; }
+        .toast-modern.show { transform: translateX(-50%) translateY(0); }
+
+        .rekap-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-top: 24px; display: none; animation: slideUp 0.3s ease; }
+        .rekap-card.open { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .rekap-header-date { font-size: 12px; font-weight: 800; color: #0ea5e9; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; text-align: center; background: #e0f2fe; padding: 6px; border-radius: 8px; }
+        .rekap-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 15px; font-weight: 700; color: #334155; }
+        .rekap-item:last-child { margin-bottom: 0; }
+        .rekap-val { color: #10b981; font-weight: 800; font-size: 16px; }
+        .divider { height: 1px; background: #e2e8f0; margin: 12px 0; }
+    </style>
+</head>
+<body>
+
+<div class="toast-modern" id="toast">✨ Transaksi Berhasil Disimpan!</div>
+
+<div class="app-container">
+    <div class="header">
+        <div class="brand">
+            <h1>WOLL FISH</h1>
+            <span>Pasar Blimbing</span>
+        </div>
+        <div class="header-right">
+            <div class="status-dot-container">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Cek...</span>
+                <span class="sync-badge" id="syncBadge" title="Antrean offline">0</span>
+            </div>
+            <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
+                <span id="privacyIcon">👁️</span> <span id="privacyText">Rekap</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Pilih Ikan (Modal / Kg)</label>
+        <select id="pilihBarang">
+            <option value="">Memuat data ikan...</option>
+        </select>
+    </div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>Jumlah</label>
+            <input type="number" id="qty" value="1" step="0.1">
+        </div>
+        <div class="form-group">
+            <label>Satuan</label>
+            <select id="satuan">
+                <option value="Ons">Ons</option>
+                <option value="Kg">Kg</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Harga Jual (Total Pembeli)</label>
+        <input type="number" id="totalJual" placeholder="Contoh: 10000">
+    </div>
+
+    <button class="btn-main" id="btnSimpan" onclick="simpanTransaksi()">
+        <span id="btnText">Simpan Transaksi</span>
+        <div class="spinner" id="btnSpinner"></div>
+    </button>
+
+    <div class="rekap-card" id="rekapPanel">
+        <div class="rekap-header-date" id="labelTanggalHariIni">📅 Memuat Tanggal...</div>
+        <div class="rekap-item">
+            <span>Omzet Hari Ini:</span>
+            <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
+        </div>
+        <div class="rekap-item">
+            <span>Laba Hari Ini:</span>
+            <span class="rekap-val" id="hLaba">Rp 0</span>
+        </div>
+        <div class="divider"></div>
+        <div class="rekap-item">
+            <span>Omzet Bulan Ini:</span>
+            <span id="bOmzet" style="color: #0f172a;">Rp 0</span>
+        </div>
+        <div class="rekap-item">
+            <span>Laba Bulan Ini:</span>
+            <span class="rekap-val" id="bLaba">Rp 0</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "URL_WEB_APP_ANDA_DISINI";
+    let produk = [];
+    let transaksiGlobal = [];
+    let rekapBuka = false;
+
+    window.onload = () => {
+        tampilkanTanggalHariIni();
+        updateStatusKoneksi();
+        muatDataLocalCache();
+        
+        if (navigator.onLine) {
+            sinkronisasiDanMuatServer();
+        }
+
+        window.addEventListener('online', () => {
+            updateStatusKoneksi();
+            sinkronisasiDanMuatServer();
+        });
+        window.addEventListener('offline', updateStatusKoneksi);
+
+        // Daftarkan PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+    };
+
+    function tampilkanTanggalHariIni() {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('labelTanggalHariIni').innerText = `📅 Hari Ini: ${new Date().toLocaleDateString('id-ID', options)}`;
+    }
+
+    function updateStatusKoneksi() {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        const badge = document.getElementById('syncBadge');
+        let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+        
+        if (queue.length > 0) {
+            badge.style.display = 'inline-block';
+            badge.innerText = queue.length;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        if (navigator.onLine) {
+            dot.className = "status-dot online";
+            text.innerText = queue.length > 0 ? "Sync..." : "Online";
+        } else {
+            dot.className = "status-dot offline";
+            text.innerText = "Offline";
+        }
+    }
+
+    function renderDropdownIkan(listProduk) {
+        produk = listProduk || [];
+        let s = document.getElementById('pilihBarang');
+        s.innerHTML = '<option value="">-- Pilih Ikan & Cek Modal --</option>';
+        produk.forEach((p, i) => {
+            let modalRupiah = Number(p.modalKg || 0).toLocaleString('id-ID');
+            s.innerHTML += `<option value="${i}">${p.nama} (Modal: Rp ${modalRupiah}/Kg)</option>`;
+        });
+    }
+
+    function muatDataLocalCache() {
+        const cachedProduk = localStorage.getItem('wollfish_produk_cache');
+        const cachedTransaksi = localStorage.getItem('wollfish_transaksi_cache');
+        if (cachedProduk) { try { renderDropdownIkan(JSON.parse(cachedProduk)); } catch(e) {} }
+        if (cachedTransaksi) { try { transaksiGlobal = JSON.parse(cachedTransaksi); hitungRekap(transaksiGlobal); } catch(e) {} }
+    }
+
+    async function prosesAntreanOffline() {
+        let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+        if (queue.length === 0 || !navigator.onLine) return;
+        updateStatusKoneksi();
+        let sisaQueue = [...queue];
+
+        for (let item of queue) {
+            try {
+                let response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(item) });
+                let res = await response.json();
+                if (res.status === "OK") { sisaQueue.shift(); localStorage.setItem('wollfish_offline_queue', JSON.stringify(sisaQueue)); }
+                else { break; }
+            } catch (err) { break; }
+        }
+        updateStatusKoneksi();
+    }
+
+    async function sinkronisasiDanMuatServer() {
+        await prosesAntreanOffline();
+        fetch(WEB_APP_URL)
+            .then(r => r.json())
+            .then(res => {
+                if (res.produk) { localStorage.setItem('wollfish_produk_cache', JSON.stringify(res.produk)); renderDropdownIkan(res.produk); }
+                if (res.transaksi) { transaksiGlobal = res.transaksi; localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(res.transaksi)); hitungRekap(transaksiGlobal); }
+                updateStatusKoneksi();
+            })
+            .catch(() => { updateStatusKoneksi(); });
+    }
+
+    function toggleRekap() {
+        rekapBuka = !rekapBuka;
+        let panel = document.getElementById('rekapPanel');
+        let icon = document.getElementById('privacyIcon');
+        let text = document.getElementById('privacyText');
+        if(rekapBuka) { panel.classList.add('open'); icon.innerText = "🔒"; text.innerText = "Tutup"; }
+        else { panel.classList.remove('open'); icon.innerText = "👁️"; text.innerText = "Rekap"; }
+    }
+
+    function hitungRekap(transaksi) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+        const currentMonthStr = `${year}-${month}`;
+
+        let hO = 0, hL = 0, bO = 0, bL = 0;
+        transaksi.forEach(t => {
+            let tglRaw = String(t.tanggal || "").split('T')[0];
+            if (tglRaw === todayStr) { hO += Number(t.omzet || 0); hL += Number(t.laba || 0); }
+            if (tglRaw.startsWith(currentMonthStr)) { bO += Number(t.omzet || 0); bL += Number(t.laba || 0); }
+        });
+
+        document.getElementById('hOmzet').innerText = "Rp " + hO.toLocaleString('id-ID');
+        document.getElementById('hLaba').innerText = "Rp " + hL.toLocaleString('id-ID');
+        document.getElementById('bOmzet').innerText = "Rp " + bO.toLocaleString('id-ID');
+        document.getElementById('bLaba').innerText = "Rp " + bL.toLocaleString('id-ID');
+    }
+
+    function showToast(pesan) {
+        let t = document.getElementById('toast');
+        t.innerText = pesan;
+        t.classList.add('show');
+        setTimeout(() => { t.classList.remove('show'); }, 2000);
+    }
+
+    function simpanTransaksi() {
+        let idx = document.getElementById('pilihBarang').value;
+        let qty = parseFloat(document.getElementById('qty').value);
+        let totalJual = parseFloat(document.getElementById('totalJual').value);
+        let satuan = document.getElementById('satuan').value;
+
+        if (idx === "" || isNaN(qty) || isNaN(totalJual)) {
+            showToast("⚠️ Lengkapi data terlebih dahulu!");
+            return;
+        }
+
+        let btn = document.getElementById('btnSimpan');
+        let txt = document.getElementById('btnText');
+        let spin = document.getElementById('btnSpinner');
+
+        btn.disabled = true; txt.style.display = "none"; spin.style.display = "block";
+
+        let p = produk[idx];
+        let modalPerKg = Number(p.modalKg || 0);
+        let qtyKg = satuan === "Ons" ? qty / 10 : qty;
+        let totalModal = modalPerKg * qtyKg;
+        let labaLokal = totalJual - totalModal;
+        let todayIso = new Date().toISOString().split('T')[0];
+
+        transaksiGlobal.push({ tanggal: todayIso, omzet: totalJual, laba: labaLokal });
+        localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(transaksiGlobal));
+        hitungRekap(transaksiGlobal);
+
+        let payloadData = { namaBarang: p.nama, modalKg: p.modalKg, qty: qty, satuan: satuan, totalOmzet: totalJual };
+
+        if (!navigator.onLine) {
+            let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+            queue.push(payloadData);
+            localStorage.setItem('wollfish_offline_queue', JSON.stringify(queue));
+            updateStatusKoneksi();
+            showToast("⚠️ Offline: Tersimpan di HP.");
+            selesaiSimpanUI(btn, txt, spin);
+            return;
+        }
+
+        fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payloadData) })
+        .then(r => r.json())
+        .then(res => {
+            if(res.status === "OK") { showToast("✨ Transaksi Berhasil!"); }
+            else { 
+                let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+                queue.push(payloadData);
+                localStorage.setItem('wollfish_offline_queue', JSON.stringify(queue));
+                updateStatusKoneksi();
+                showToast("⚠️ Masuk antrean sync HP."); 
+            }
+            selesaiSimpanUI(btn, txt, spin);
+        })
+        .catch(() => {
+            let queue = JSON.parse(localStorage.getItem('wollfish_offline_queue') || '[]');
+            queue.push(payloadData);
+            localStorage.setItem('wollfish_offline_queue', JSON.stringify(queue));
+            updateStatusKoneksi();
+            showToast("⚠️ Jaringan putus: Masuk antrean sync HP.");
+            selesaiSimpanUI(btn, txt, spin);
+        });
+    }
+
+    function selesaiSimpanUI(btn, txt, spin) {
+        setTimeout(() => {
+            btn.disabled = false; txt.style.display = "inline"; spin.style.display = "none";
+            document.getElementById('totalJual').value = "";
+        }, 1000);
+    }
+</script>
+</body>
+</html>
