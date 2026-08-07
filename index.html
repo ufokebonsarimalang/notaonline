@@ -2,335 +2,77 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasir & Laporan Toko WOL FISH</title>
+    <title>Kasir WOL FISH - Pasar Blimbing</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; background: #e2e8f0; padding: 16px; margin: 0; color: #1e293b; }
-        .container { max-width: 420px; margin: auto; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #cbd5e1; }
-        
-        /* Navigasi Tab */
-        .nav-tab { display: flex; gap: 6px; margin-bottom: 16px; font-family: 'Inter', sans-serif; }
-        .nav-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 11px; background: #cbd5e1; color: #475569; }
-        .nav-btn.active { background: #6d28d9; color: white; }
-
-        .section-view { display: none; }
-        .section-view.active { display: block; }
-
-        .store-header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 14px; }
-        .store-name { font-size: 15px; font-weight: 900; letter-spacing: 1px; color: #0f172a; margin: 0; }
-        .store-address { font-size: 11px; color: #64748b; margin: 2px 0; }
-
-        .form-group { margin-bottom: 12px; font-family: 'Inter', sans-serif; }
-        label { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 13px; outline: none; }
-        input:focus, select:focus { border-color: #6d28d9; box-shadow: 0 0 0 3px rgba(109,40,217,0.1); }
-
-        .row-group { display: flex; gap: 8px; }
-        .row-group > div { flex: 1; }
-
-        .receipt-preview { background: #f8fafc; border: 1px dashed #94a3b8; padding: 12px; border-radius: 8px; margin: 14px 0; font-size: 12px; }
-        .receipt-title { font-weight: bold; text-align: center; margin-bottom: 6px; font-size: 12px; color: #334155; }
-        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .receipt-total { border-top: 1px solid #cbd5e1; margin-top: 6px; padding-top: 6px; font-weight: bold; display: flex; justify-content: space-between; font-size: 13px; color: #0f172a; }
-
-        .btn-container { display: flex; gap: 8px; margin-top: 14px; font-family: 'Inter', sans-serif; }
-        .btn { flex: 1; padding: 12px 8px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 11px; text-transform: uppercase; }
-        .btn-save { background: #475569; color: white; }
-        .btn-wa { background: #25d366; color: white; }
-
-        /* Tampilan Rekap Laporan */
-        .rekap-card { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-family: 'Inter', sans-serif; }
-        .rekap-title { font-size: 12px; font-weight: 800; color: #6d28d9; margin-bottom: 8px; text-transform: uppercase; }
-        .rekap-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
-        .rekap-row.highlight { font-weight: 800; color: #16a34a; border-top: 1px solid #e2e8f0; padding-top: 6px; }
-
-        .spinner { display: none; width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin: auto; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        body { font-family: 'Arial', sans-serif; background: #f8fafc; padding: 10px; }
+        .container { max-width: 400px; margin: auto; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #0f172a; margin: 0 0 10px 0; font-size: 18px; }
+        .label { font-size: 12px; font-weight: bold; margin-top: 10px; display: block; }
+        select, input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #0ea5e9; color: white; border: none; border-radius: 5px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .rekap-box { background: #f1f5f9; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Menu Tab Navigasi -->
-    <div class="nav-tab">
-        <button type="button" class="nav-btn active" id="tabKasir" onclick="switchTab('kasir')">🛒 Kasir</button>
-        <button type="button" class="nav-btn" id="tabRekap" onclick="switchTab('rekap')">📊 Laporan Rekap</button>
-    </div>
+    <h2>WOL FISH - Pasar Blimbing</h2>
+    
+    <label class="label">Pilih Ikan</label>
+    <select id="pilihBarang" onchange="updateHarga()"></select>
 
-    <!-- VIEW 1: KASIR -->
-    <div id="viewKasir" class="section-view active">
-        <div class="store-header">
-            <h2 class="store-name">"WOL FISH"</h2>
-            <p class="store-address">UFO Kebonsari - Malang</p>
+    <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+            <label class="label">Jumlah</label>
+            <input type="number" id="qty" value="1" step="0.1" oninput="updateTotal()">
         </div>
-
-        <div class="form-group">
-            <label>Nama Customer</label>
-            <input type="text" id="namaCust" placeholder="Nama Pembeli">
-        </div>
-        
-        <div class="form-group">
-            <label>No. WhatsApp Customer</label>
-            <input type="text" id="noWa" placeholder="08xxxxxxxxxx">
-        </div>
-
-        <div class="form-group">
-            <label>Pilih Ikan</label>
-            <select id="pilihBarang" onchange="setDataBarang()">
-                <option value="">-- Pilih Ikan --</option>
+        <div style="flex:1;">
+            <label class="label">Satuan</label>
+            <select id="satuan" onchange="updateTotal()">
+                <option value="Ons">Ons</option>
+                <option value="Kg">Kg</option>
             </select>
         </div>
-
-        <div class="row-group">
-            <div class="form-group">
-                <label>Jumlah Beli (Qty)</label>
-                <input type="number" id="qty" value="3" min="0.1" step="0.1" oninput="updatePreview()">
-            </div>
-            <div class="form-group">
-                <label>Satuan</label>
-                <select id="satuan" onchange="updatePreview()">
-                    <option value="Ons">Ons</option>
-                    <option value="Kg">Kg</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Harga Jual per Satuan (Rp)</label>
-            <input type="number" id="hargaJual" placeholder="0" oninput="updatePreview()">
-        </div>
-
-        <div class="receipt-preview">
-            <div class="receipt-title">STRUK PENJUALAN IKAN</div>
-            <div class="receipt-row">
-                <span id="prevBarang">-</span>
-                <span id="prevSubtotal">Rp 0</span>
-            </div>
-            <div class="receipt-total">
-                <span>TOTAL:</span>
-                <span id="prevTotal">Rp 0</span>
-            </div>
-        </div>
-
-        <div class="btn-container">
-            <button type="button" class="btn btn-save" id="btnSave" onclick="prosesTransaksi(false)">
-                <span id="txtSave">Simpan Saja</span>
-                <div class="spinner" id="spinSave"></div>
-            </button>
-            <button type="button" class="btn btn-wa" id="btnWa" onclick="prosesTransaksi(true)">
-                <span id="txtWa">Simpan & Kirim WA</span>
-                <div class="spinner" id="spinWa"></div>
-            </button>
-        </div>
     </div>
 
-    <!-- VIEW 2: LAPORAN REKAP -->
-    <div id="viewRekap" class="section-view">
-        <div class="store-header">
-            <h2 class="store-name">LAPORAN KEUANGAN</h2>
-            <p class="store-address">Otomatis dari Sistem Toko</p>
-        </div>
+    <label class="label">Harga Jual (Total)</label>
+    <input type="number" id="totalJual" placeholder="Masukkan total harga">
 
-        <div class="rekap-card">
-            <div class="rekap-title">📅 Rekap Hari Ini</div>
-            <div class="rekap-row"><span>Total Omzet:</span> <span id="hariOmzet">Rp 0</span></div>
-            <div class="rekap-row"><span>Total Modal (HPP):</span> <span id="hariModal">Rp 0</span></div>
-            <div class="rekap-row highlight"><span>Keuntungan Bersih:</span> <span id="hariMargin">Rp 0</span></div>
-        </div>
+    <button class="btn" onclick="simpanTransaksi()">SIMPAN TRANSAKSI</button>
 
-        <div class="rekap-card">
-            <div class="rekap-title">📆 Rekap Bulan Ini</div>
-            <div class="rekap-row"><span>Total Omzet:</span> <span id="bulanOmzet">Rp 0</span></div>
-            <div class="rekap-row"><span>Total Modal (HPP):</span> <span id="bulanModal">Rp 0</span></div>
-            <div class="rekap-row highlight"><span>Keuntungan Bersih:</span> <span id="bulanMargin">Rp 0</span></div>
-        </div>
-
-        <button type="button" class="btn btn-save" onclick="loadDataAwal()" style="width:100%; margin-top:10px;">🔄 Refresh Data Laporan</button>
+    <div class="rekap-box">
+        <b>Keuntungan Hari Ini: <span id="hariMargin">Rp 0</span></b>
     </div>
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
-    let listProdukGlobal = [];
-    let listTransaksiGlobal = [];
+    const WEB_APP_URL = "URL_WEB_APP_ANDA_DISINI";
+    let produk = [];
 
-    window.onload = function() {
-        loadDataAwal();
+    window.onload = () => {
+        fetch(WEB_APP_URL).then(r => r.json()).then(res => {
+            produk = res.produk;
+            let s = document.getElementById('pilihBarang');
+            produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
+            document.getElementById('hariMargin').innerText = "Rp " + res.transaksi.filter(t => t.tanggal === new Date().toISOString().split('T')[0]).reduce((a,b) => a + b.margin, 0).toLocaleString();
+        });
     };
 
-    function loadDataAwal() {
-        fetch(WEB_APP_URL)
-            .then(r => r.json())
-            .then(res => {
-                listProdukGlobal = res.produk || [];
-                listTransaksiGlobal = res.transaksi || [];
-
-                // Isi dropdown produk
-                let select = document.getElementById('pilihBarang');
-                select.innerHTML = '<option value="">-- Pilih Ikan --</option>';
-                listProdukGlobal.forEach((p, idx) => {
-                    select.innerHTML += `<option value="${idx}">${p.nama} (Modal Rp ${p.modalKg.toLocaleString('id-ID')}/Kg)</option>`;
-                });
-
-                // Hitung dan tampilkan rekap laporan
-                hitungRekapLaporan();
-            }).catch(() => {
-                console.log("Gagal memuat data server.");
-            });
-    }
-
-    function switchTab(menu) {
-        if(menu === 'kasir') {
-            document.getElementById('viewKasir').classList.add('active');
-            document.getElementById('viewRekap').classList.remove('active');
-            document.getElementById('tabKasir').classList.add('active');
-            document.getElementById('tabRekap').classList.remove('active');
-        } else {
-            document.getElementById('viewRekap').classList.add('active');
-            document.getElementById('viewKasir').classList.remove('active');
-            document.getElementById('tabRekap').classList.add('active');
-            document.getElementById('tabKasir').classList.remove('active');
-            loadDataAwal(); // Refresh rekap saat tab dibuka
-        }
-    }
-
-    function setDataBarang() {
+    function simpanTransaksi() {
         let idx = document.getElementById('pilihBarang').value;
-        if(idx !== "") {
-            let p = listProdukGlobal[idx];
-            document.getElementById('hargaJual').value = p.jualStandar > 0 ? p.jualStandar : "";
-        }
-        updatePreview();
-    }
-
-    function updatePreview() {
-        let idx = document.getElementById('pilihBarang').value;
-        let qty = parseFloat(document.getElementById('qty').value) || 0;
-        let satuan = document.getElementById('satuan').value;
-        let hargaJual = parseFloat(document.getElementById('hargaJual').value) || 0;
-        
-        let namaBarang = idx !== "" ? listProdukGlobal[idx].nama : "-";
-        let total = qty * hargaJual;
-
-        document.getElementById('prevBarang').innerText = namaBarang !== "-" ? `${namaBarang} (${qty} ${satuan})` : "-";
-        document.getElementById('prevSubtotal').innerText = "Rp " + total.toLocaleString('id-ID');
-        document.getElementById('prevTotal').innerText = "Rp " + total.toLocaleString('id-ID');
-    }
-
-    function hitungRekapLaporan() {
-        const today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
-        const currentMonth = today.substring(0, 7); // Format YYYY-MM
-
-        let hOmzet = 0, hModal = 0, hMargin = 0;
-        let bOmzet = 0, bModal = 0, bMargin = 0;
-
-        listTransaksiGlobal.forEach(t => {
-            // Rekap Hari Ini
-            if (t.tanggal === today) {
-                hOmzet += t.omzet;
-                hModal += t.modal;
-                hMargin += t.margin;
-            }
-            // Rekap Bulan Ini
-            if (t.tanggal.startsWith(currentMonth)) {
-                bOmzet += t.omzet;
-                bModal += t.modal;
-                bMargin += t.margin;
-            }
-        });
-
-        // Tampilkan ke HTML
-        document.getElementById('hariOmzet').innerText = "Rp " + hOmzet.toLocaleString('id-ID');
-        document.getElementById('hariModal').innerText = "Rp " + hModal.toLocaleString('id-ID');
-        document.getElementById('hariMargin').innerText = "Rp " + hMargin.toLocaleString('id-ID');
-
-        document.getElementById('bulanOmzet').innerText = "Rp " + bOmzet.toLocaleString('id-ID');
-        document.getElementById('bulanModal').innerText = "Rp " + bModal.toLocaleString('id-ID');
-        document.getElementById('bulanMargin').innerText = "Rp " + bMargin.toLocaleString('id-ID');
-    }
-
-    function prosesTransaksi(kirimWA) {
-        let nama = document.getElementById('namaCust').value.trim();
-        let wa = document.getElementById('noWa').value.trim();
-        let idx = document.getElementById('pilihBarang').value;
-        let qty = parseFloat(document.getElementById('qty').value);
-        let satuan = document.getElementById('satuan').value;
-        let hargaJual = parseFloat(document.getElementById('hargaJual').value);
-
-        if (!nama || idx === "" || isNaN(hargaJual)) {
-            alert("Harap lengkapi nama customer, pilih ikan, dan harga jual!");
-            return;
-        }
-
-        if (kirimWA && !wa) {
-            alert("No WhatsApp wajib diisi jika ingin kirim nota ke WA!");
-            return;
-        }
-
-        let namaBarang = listProdukGlobal[idx].nama;
-        let modalKg = listProdukGlobal[idx].modalKg;
-        let totalOmzet = qty * hargaJual;
-
-        const btnTarget = kirimWA ? document.getElementById('btnWa') : document.getElementById('btnSave');
-        const txtTarget = kirimWA ? document.getElementById('txtWa') : document.getElementById('txtSave');
-        const spinTarget = kirimWA ? document.getElementById('spinWa') : document.getElementById('spinSave');
-
-        btnTarget.disabled = true;
-        txtTarget.style.display = "none";
-        spinTarget.style.display = "block";
-
+        let p = produk[idx];
         fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({
-                namaCust: nama,
-                noWa: wa || "-",
-                namaBarang: namaBarang,
-                qty: qty,
-                satuan: satuan,
-                modalKg: modalKg,
-                totalOmzet: totalOmzet
+                namaBarang: p.nama,
+                modalKg: p.modalKg,
+                qty: parseFloat(document.getElementById('qty').value),
+                satuan: document.getElementById('satuan').value,
+                totalOmzet: parseFloat(document.getElementById('totalJual').value)
             })
-        })
-        .then(r => r.json())
-        .then(res => {
-            btnTarget.disabled = false;
-            txtTarget.style.display = "block";
-            spinTarget.style.display = "none";
-
-            if (res.status === "OK") {
-                if (kirimWA) {
-                    let pesanWA = `*TOKO IKAN KEBONSARI*\n` +
-                                  `-----------------------------------\n` +
-                                  `👤 Cust: *${nama}*\n` +
-                                  `-----------------------------------\n` +
-                                  `*RINCIAN BELANJA:*\n` +
-                                  `• ${namaBarang} (${qty} ${satuan}) - Rp ${totalOmzet.toLocaleString('id-ID')}\n` +
-                                  `-----------------------------------\n` +
-                                  `*TOTAL TAGIHAN : Rp ${totalOmzet.toLocaleString('id-ID')}*\n` +
-                                  `-----------------------------------\n` +
-                                  `Terima kasih telah berbelanja! 🙏`;
-
-                    let cleanWa = wa.startsWith('0') ? '62' + wa.substring(1) : wa;
-                    window.open(`https://wa.me/${cleanWa}?text=` + encodeURIComponent(pesanWA), '_blank');
-                } else {
-                    alert("Transaksi berhasil disimpan!");
-                }
-
-                document.getElementById('namaCust').value = "";
-                document.getElementById('noWa').value = "";
-                document.getElementById('qty').value = "3";
-                document.getElementById('hargaJual').value = "";
-                document.getElementById('pilihBarang').selectedIndex = 0;
-                updatePreview();
-                loadDataAwal(); // Refresh data rekap otomatis
-            } else {
-                alert("Gagal menyimpan transaksi.");
-            }
-        }).catch(() => {
-            btnTarget.disabled = false;
-            txtTarget.style.display = "block";
-            spinTarget.style.display = "none";
-            alert("Koneksi server gagal.");
+        }).then(() => {
+            alert("Transaksi Tersimpan!");
+            location.reload();
         });
     }
 </script>
