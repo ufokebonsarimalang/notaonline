@@ -7,13 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: #0f172a; margin: 0; padding: 0; color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        body { background: #0f172a; margin: 0; padding: 16px; color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
         
-        .app-container { width: 100%; max-width: 480px; min-height: 100vh; background: #ffffff; color: #1e293b; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
-        
-        @media (min-width: 481px) {
-            .app-container { min-height: 90vh; border-radius: 24px; }
-        }
+        .app-container { width: 100%; max-width: 480px; background: #ffffff; color: #1e293b; border-radius: 24px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
 
         /* Header Modern */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; }
@@ -24,7 +20,7 @@
         .privacy-pill:active { background: #e2e8f0; transform: scale(0.96); }
 
         /* Form Controls */
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
         label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
         
         select, input { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 16px; font-weight: 600; color: #0f172a; background: #f8fafc; outline: none; transition: 0.2s; }
@@ -33,21 +29,21 @@
         .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
 
-        /* Tombol Aksi Utama dengan Spinner Khusus */
-        .btn-main { width: 100%; padding: 18px; background: #0ea5e9; color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: auto; }
+        /* Tombol Aksi Tepat di Bawah Harga Jual */
+        .btn-main { width: 100%; padding: 18px; background: #0ea5e9; color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
         .btn-main:active { transform: scale(0.98); background: #0284c7; }
         .btn-main:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; }
 
-        /* Animasi Spinner Khusus Tombol */
+        /* Spinner Tombol */
         .spinner { display: none; width: 20px; height: 20px; border: 3px solid #ffffff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Toast Modern Pengganti Alert */
+        /* Toast */
         .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; display: flex; align-items: center; gap: 8px; }
         .toast-modern.show { transform: translateX(-50%) translateY(0); }
 
         /* Panel Laporan Rahasia */
-        .rekap-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-top: 20px; display: none; animation: slideUp 0.3s ease; }
+        .rekap-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-top: 24px; display: none; animation: slideUp 0.3s ease; }
         .rekap-card.open { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -62,70 +58,70 @@
 <div class="toast-modern" id="toast">✨ Transaksi Berhasil Disimpan!</div>
 
 <div class="app-container">
-    <div>
-        <!-- Header -->
-        <div class="header">
-            <div class="brand">
-                <h1>WOLL FISH</h1>
-                <span>Pasar Blimbing</span>
-            </div>
-            <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
-                <span id="privacyIcon">👁️</span> <span id="privacyText">Laba</span>
-            </button>
+    <!-- Header -->
+    <div class="header">
+        <div class="brand">
+            <h1>WOLL FISH</h1>
+            <span>Pasar Blimbing</span>
         </div>
+        <button class="privacy-pill" onclick="toggleRekap()" id="privacyBtn">
+            <span id="privacyIcon">👁️</span> <span id="privacyText">Laba</span>
+        </button>
+    </div>
 
-        <!-- Input Form -->
+    <!-- Input Form -->
+    <div class="form-group">
+        <label>Pilih Ikan</label>
+        <select id="pilihBarang">
+            <option value="">Memuat data ikan...</option>
+        </select>
+    </div>
+
+    <div class="row">
         <div class="form-group">
-            <label>Pilih Ikan</label>
-            <select id="pilihBarang"></select>
+            <label>Jumlah</label>
+            <input type="number" id="qty" value="1" step="0.1">
         </div>
-
-        <div class="row">
-            <div class="form-group">
-                <label>Jumlah</label>
-                <input type="number" id="qty" value="1" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Satuan</label>
-                <select id="satuan">
-                    <option value="Ons">Ons</option>
-                    <option value="Kg">Kg</option>
-                </select>
-            </div>
-        </div>
-
         <div class="form-group">
-            <label>Harga Jual (Total Pembeli)</label>
-            <input type="number" id="totalJual" placeholder="Contoh: 10000">
-        </div>
-
-        <!-- Panel Rekap Rahasia -->
-        <div class="rekap-card" id="rekapPanel">
-            <div class="rekap-item">
-                <span>Omzet Hari Ini:</span>
-                <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
-            </div>
-            <div class="rekap-item">
-                <span>Laba Hari Ini:</span>
-                <span class="rekap-val" id="hLaba">Rp 0</span>
-            </div>
-            <div class="divider"></div>
-            <div class="rekap-item">
-                <span>Omzet Bulan Ini:</span>
-                <span id="bOmzet" style="color: #0f172a;">Rp 0</span>
-            </div>
-            <div class="rekap-item">
-                <span>Laba Bulan Ini:</span>
-                <span class="rekap-val" id="bLaba">Rp 0</span>
-            </div>
+            <label>Satuan</label>
+            <select id="satuan">
+                <option value="Ons">Ons</option>
+                <option value="Kg">Kg</option>
+            </select>
         </div>
     </div>
 
-    <!-- Tombol Simpan dengan Spinner Khusus -->
+    <div class="form-group">
+        <label>Harga Jual (Total Pembeli)</label>
+        <input type="number" id="totalJual" placeholder="Contoh: 10000">
+    </div>
+
+    <!-- Tombol Simpan tepat di bawah Harga Jual -->
     <button class="btn-main" id="btnSimpan" onclick="simpanTransaksi()">
         <span id="btnText">Simpan Transaksi</span>
         <div class="spinner" id="btnSpinner"></div>
     </button>
+
+    <!-- Panel Rekap Rahasia -->
+    <div class="rekap-card" id="rekapPanel">
+        <div class="rekap-item">
+            <span>Omzet Hari Ini:</span>
+            <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
+        </div>
+        <div class="rekap-item">
+            <span>Laba Hari Ini:</span>
+            <span class="rekap-val" id="hLaba">Rp 0</span>
+        </div>
+        <div class="divider"></div>
+        <div class="rekap-item">
+            <span>Omzet Bulan Ini:</span>
+            <span id="bOmzet" style="color: #0f172a;">Rp 0</span>
+        </div>
+        <div class="rekap-item">
+            <span>Laba Bulan Ini:</span>
+            <span class="rekap-val" id="bLaba">Rp 0</span>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -137,12 +133,20 @@
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
-                produk = res.produk;
+                produk = res.produk || [];
                 let s = document.getElementById('pilihBarang');
                 s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
-                produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
+                produk.forEach((p, i) => {
+                    s.innerHTML += `<option value="${i}">${p.nama}</option>`;
+                });
 
-                hitungRekap(res.transaksi);
+                if(res.transaksi) {
+                    hitungRekap(res.transaksi);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('pilihBarang').innerHTML = '<option value="">Gagal memuat data ikan</option>';
             });
     };
 
@@ -169,8 +173,8 @@
 
         let hO = 0, hL = 0, bO = 0, bL = 0;
         transaksi.forEach(t => {
-            if (t.tanggal === today) { hO += t.omzet; hL += t.laba; }
-            if (t.tanggal.startsWith(currentMonth)) { bO += t.omzet; bL += t.laba; }
+            if (t.tanggal === today) { hO += Number(t.omzet || 0); hL += Number(t.laba || 0); }
+            if (t.tanggal && t.tanggal.startsWith(currentMonth)) { bO += Number(t.omzet || 0); bL += Number(t.laba || 0); }
         });
 
         document.getElementById('hOmzet').innerText = "Rp " + hO.toLocaleString('id-ID');
@@ -183,7 +187,7 @@
         let t = document.getElementById('toast');
         t.innerText = pesan;
         t.classList.add('show');
-        setTimeout(() => { t.classList.remove('show'); }, 1500);
+        setTimeout(() => { t.classList.remove('show'); }, 2000);
     }
 
     function simpanTransaksi() {
