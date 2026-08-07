@@ -7,55 +7,146 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: #0f172a; margin: 0; padding: 0; color: #1e293b; height: 100vh; overflow: hidden; }
-        .app-container { width: 100%; max-width: 480px; height: 100vh; background: #ffffff; display: flex; flex-direction: column; padding: 15px; }
+        body { background: #0f172a; margin: 0; padding: 0; color: #f8fafc; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
         
-        /* Header lebih ringkas */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .brand h1 { font-size: 18px; font-weight: 800; margin: 0; }
+        .app-container { width: 100%; max-width: 480px; height: 100vh; background: #ffffff; color: #1e293b; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); position: relative; }
         
-        /* Form lebih padat agar tidak scroll */
-        .form-group { margin-bottom: 8px; }
-        label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px; display: block; }
-        select, input { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-weight: 600; background: #f8fafc; }
+        @media (min-width: 481px) {
+            .app-container { height: 92vh; border-radius: 24px; }
+        }
+
+        /* Header Modern */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        .brand h1 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
+        .brand span { font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Tombol Simpan selalu di posisi bawah tanpa scroll */
-        .btn-main { margin-top: auto; padding: 16px; background: #0ea5e9; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .privacy-pill { background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .privacy-pill:active { background: #e2e8f0; }
+
+        /* Form Controls Compact & Bersih */
+        .form-group { margin-bottom: 10px; }
+        label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px; letter-spacing: 0.5px; }
         
-        .spinner { display: none; width: 18px; height: 18px; border: 3px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        select, input { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; font-weight: 600; color: #0f172a; background: #f8fafc; outline: none; }
+        select:focus, input:focus { border-color: #0ea5e9; background: #fff; }
+
+        .row { display: flex; gap: 10px; }
+        .row > div { flex: 1; }
+
+        /* Tombol Simpan Utama (Menempel pas di bawah tanpa perlu scroll) */
+        .btn-main { margin-top: auto; width: 100%; padding: 15px; background: #0ea5e9; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 16px -4px rgba(14, 165, 233, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-main:active { background: #0284c7; }
+        .btn-main:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        /* Spinner Khusus Tombol */
+        .spinner { display: none; width: 18px; height: 18px; border: 3px solid #ffffff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast Modern Pengganti Alert */
+        .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 12px 20px; border-radius: 30px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; display: flex; align-items: center; gap: 8px; }
+        .toast-modern.show { transform: translateX(-50%) translateY(0); }
+
+        /* Panel Overlay Rekap Rahasia */
+        .rekap-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .rekap-card { background: #ffffff; width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); animation: scaleUp 0.2s ease; }
+        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .rekap-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+        .rekap-header h3 { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; }
+        .close-btn { background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; color: #64748b; }
+
+        .rekap-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; font-weight: 700; color: #334155; }
+        .rekap-val { color: #10b981; font-weight: 800; font-size: 15px; }
+        .divider { height: 1px; background: #e2e8f0; margin: 12px 0; }
+        .periode-label { font-size: 10px; font-weight: 800; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
 
+<div class="toast-modern" id="toast">✨ Transaksi Berhasil Disimpan!</div>
+
+<!-- Panel Overlay Laporan Laba Rahasia -->
+<div class="rekap-overlay" id="rekapOverlay">
+    <div class="rekap-card">
+        <div class="rekap-header">
+            <h3>Laporan Laba & Omzet</h3>
+            <button class="close-btn" onclick="toggleRekap()">✕</button>
+        </div>
+        
+        <!-- Hari Ini -->
+        <div>
+            <div class="periode-label">Hari Ini <span id="teksTglHariIni" style="color: #0ea5e9; text-transform: none;"></span></div>
+            <div class="rekap-item">
+                <span>Omzet:</span>
+                <span id="hOmzet" style="color: #0f172a;">Rp 0</span>
+            </div>
+            <div class="rekap-item">
+                <span>Laba Bersih:</span>
+                <span class="rekap-val" id="hLaba">Rp 0</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Bulan Ini -->
+        <div>
+            <div class="periode-label">Bulan Ini <span id="teksRentangBulan" style="color: #0ea5e9; text-transform: none;"></span></div>
+            <div class="rekap-item">
+                <span>Omzet:</span>
+                <span id="bOmzet" style="color: #0f172a;">Rp 0</span>
+            </div>
+            <div class="rekap-item">
+                <span>Laba Bersih:</span>
+                <span class="rekap-val" id="bLaba">Rp 0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="app-container">
-    <div class="header">
-        <div class="brand"><h1>WOLL FISH</h1></div>
-        <button onclick="toggleRekap()" style="border:none; background:#f1f5f9; padding:6px 12px; border-radius:15px; font-size:12px;">👁️ Laba</button>
-    </div>
-
-    <div class="form-group">
-        <label>Ikan</label>
-        <select id="pilihBarang"></select>
-    </div>
-
-    <div style="display:flex; gap:8px;">
-        <div class="form-group" style="flex:1;">
-            <label>Jumlah</label>
-            <input type="number" id="qty" value="1" step="0.1">
+    <div>
+        <!-- Header -->
+        <div class="header">
+            <div class="brand">
+                <h1>WOLL FISH</h1>
+                <span>Pasar Blimbing</span>
+            </div>
+            <button class="privacy-pill" onclick="toggleRekap()">
+                <span>👁️</span> Laba
+            </button>
         </div>
-        <div class="form-group" style="flex:1;">
-            <label>Satuan</label>
-            <select id="satuan"><option value="Ons">Ons</option><option value="Kg">Kg</option></select>
+
+        <!-- Input Form -->
+        <div class="form-group">
+            <label>Pilih Ikan</label>
+            <select id="pilihBarang"></select>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <flex style="flex:1;">
+                    <label>Jumlah</label>
+                    <input type="number" id="qty" value="1" step="0.1">
+                </flex>
+            </div>
+            <div class="form-group">
+                <flex style="flex:1;">
+                    <label>Satuan</label>
+                    <select id="satuan">
+                        <option value="Ons">Ons</option>
+                        <option value="Kg">Kg</option>
+                    </select>
+                </flex>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Harga Jual (Total Pembeli)</label>
+            <input type="number" id="totalJual" placeholder="Contoh: 10000">
         </div>
     </div>
 
-    <div class="form-group">
-        <label>Harga Jual (Total)</label>
-        <input type="number" id="totalJual" placeholder="Rp...">
-    </div>
-
-    <!-- Tombol Simpan (margin-top: auto membuatnya selalu menempel di bawah tapi tidak kelebihan) -->
+    <!-- Tombol Simpan (Pas di bawah layar tanpa perlu scroll) -->
     <button class="btn-main" id="btnSimpan" onclick="simpanTransaksi()">
         <span id="btnText">Simpan Transaksi</span>
         <div class="spinner" id="btnSpinner"></div>
@@ -66,29 +157,99 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
     let produk = [];
 
-    // Fungsi untuk memastikan data terkirim
+    window.onload = () => {
+        // Tampilkan Tanggal & Rentang Bulan Otomatis
+        const now = new Date();
+        const tglSkrg = now.getDate();
+        const bulan = now.toLocaleString('id-ID', { month: 'long' });
+        
+        document.getElementById('teksTglHariIni').innerText = `(${tglSkrg} ${bulan})`;
+        document.getElementById('teksRentangBulan').innerText = `(1 s.d. ${tglSkrg} ${bulan})`;
+
+        // Ambil Data Produk & Rekap dari Google Sheet
+        fetch(WEB_APP_URL)
+            .then(r => r.json())
+            .then(res => {
+                produk = res.produk;
+                let s = document.getElementById('pilihBarang');
+                s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
+                produk.forEach((p, i) => s.innerHTML += `<option value="${i}">${p.nama}</option>`);
+
+                hitungRekap(res.transaksi);
+            });
+    };
+
+    function toggleRekap() {
+        let overlay = document.getElementById('rekapOverlay');
+        overlay.style.display = (overlay.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function hitungRekap(transaksi) {
+        const today = new Date().toISOString().split('T')[0];
+        const currentMonth = today.substring(0, 7);
+
+        let hO = 0, hL = 0, bO = 0, bL = 0;
+        transaksi.forEach(t => {
+            if (t.tanggal === today) { hO += t.omzet; hL += t.laba; }
+            if (t.tanggal.startsWith(currentMonth)) { bO += t.omzet; bL += t.laba; }
+        });
+
+        document.getElementById('hOmzet').innerText = "Rp " + hO.toLocaleString('id-ID');
+        document.getElementById('hLaba').innerText = "Rp " + hL.toLocaleString('id-ID');
+        document.getElementById('bOmzet').innerText = "Rp " + bO.toLocaleString('id-ID');
+        document.getElementById('bLaba').innerText = "Rp " + bL.toLocaleString('id-ID');
+    }
+
+    function showToast(pesan) {
+        let t = document.getElementById('toast');
+        t.innerText = pesan;
+        t.classList.add('show');
+        setTimeout(() => { t.classList.remove('show'); }, 1500);
+    }
+
     function simpanTransaksi() {
         let idx = document.getElementById('pilihBarang').value;
+        let qty = parseFloat(document.getElementById('qty').value);
+        let totalJual = parseFloat(document.getElementById('totalJual').value);
+
+        if (idx === "" || isNaN(qty) || isNaN(totalJual)) {
+            showToast("⚠️ Lengkapi data terlebih dahulu!");
+            return;
+        }
+
+        let btn = document.getElementById('btnSimpan');
+        let txt = document.getElementById('btnText');
+        let spin = document.getElementById('btnSpinner');
+
+        btn.disabled = true;
+        txt.style.display = "none";
+        spin.style.display = "block";
+
         let p = produk[idx];
-        let data = {
-            namaBarang: p.nama,
-            modalKg: p.modalKg,
-            qty: parseFloat(document.getElementById('qty').value),
-            satuan: document.getElementById('satuan').value,
-            totalOmzet: parseFloat(document.getElementById('totalJual').value)
-        };
-
-        // Animasi loading
-        document.getElementById('btnSimpan').disabled = true;
-        document.getElementById('btnText').style.display = "none";
-        document.getElementById('btnSpinner').style.display = "block";
-
         fetch(WEB_APP_URL, {
             method: 'POST',
-            body: JSON.stringify(data)
-        }).then(() => {
-            alert("Berhasil!");
-            location.reload();
+            body: JSON.stringify({
+                namaBarang: p.nama,
+                modalKg: p.modalKg,
+                qty: qty,
+                satuan: document.getElementById('satuan').value,
+                totalOmzet: totalJual
+            })
+        }).then(r => r.json()).then(res => {
+            if(res.status === "OK") {
+                showToast("✨ Transaksi Berhasil!");
+                setTimeout(() => { location.reload(); }, 1000);
+            } else {
+                showToast("❌ Gagal menyimpan.");
+                btn.disabled = false;
+                txt.style.display = "inline";
+                spin.style.display = "none";
+            }
+        }).catch(() => {
+            showToast("❌ Jaringan bermasalah.");
+            btn.disabled = false;
+            txt.style.display = "inline";
+            spin.style.display = "none";
         });
     }
 </script>
