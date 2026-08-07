@@ -2,39 +2,35 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WOLL FISH POS</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: #0f172a; margin: 0; padding: 0; color: #f8fafc; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        body { background: #0f172a; margin: 0; padding: 12px; color: #1e293b; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
         
-        .app-container { width: 100%; max-width: 480px; height: 100vh; background: #ffffff; color: #1e293b; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); position: relative; }
-        
-        @media (min-width: 481px) {
-            .app-container { height: 92vh; border-radius: 24px; }
-        }
+        .app-container { width: 100%; max-width: 480px; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); position: relative; margin-bottom: 20px; }
 
-        /* Header Modern */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; }
         .brand h1 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
         .brand span { font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         
-        .privacy-pill { background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .privacy-pill { background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .privacy-pill:active { background: #e2e8f0; }
 
-        /* Form Controls Compact & Bersih */
-        .form-group { margin-bottom: 10px; }
-        label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px; letter-spacing: 0.5px; }
+        /* Form Controls */
+        .form-group { margin-bottom: 16px; }
+        label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px; letter-spacing: 0.5px; }
         
-        select, input { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; font-weight: 600; color: #0f172a; background: #f8fafc; outline: none; }
+        select, input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; font-weight: 600; color: #0f172a; background: #f8fafc; outline: none; }
         select:focus, input:focus { border-color: #0ea5e9; background: #fff; }
 
-        .row { display: flex; gap: 10px; }
+        .row { display: flex; gap: 12px; }
         .row > div { flex: 1; }
 
-        /* Tombol Simpan Utama (Menempel pas di bawah tanpa perlu scroll) */
-        .btn-main { margin-top: auto; width: 100%; padding: 15px; background: #0ea5e9; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 16px -4px rgba(14, 165, 233, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        /* Tombol Simpan Utama (Pasti Tampil & Bisa Di-klik) */
+        .btn-main { width: 100%; padding: 16px; background: #0ea5e9; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 16px -4px rgba(14, 165, 233, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
         .btn-main:active { background: #0284c7; }
         .btn-main:disabled { background: #94a3b8; cursor: not-allowed; }
 
@@ -47,7 +43,7 @@
         .toast-modern.show { transform: translateX(-50%) translateY(0); }
 
         /* Panel Overlay Rekap Rahasia */
-        .rekap-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .rekap-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
         .rekap-card { background: #ffffff; width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); animation: scaleUp 0.2s ease; }
         @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -104,49 +100,43 @@
 </div>
 
 <div class="app-container">
-    <div>
-        <!-- Header -->
-        <div class="header">
-            <div class="brand">
-                <h1>WOLL FISH</h1>
-                <span>Pasar Blimbing</span>
-            </div>
-            <button class="privacy-pill" onclick="toggleRekap()">
-                <span>👁️</span> Laba
-            </button>
+    <!-- Header -->
+    <div class="header">
+        <div class="brand">
+            <h1>WOLL FISH</h1>
+            <span>Pasar Blimbing</span>
         </div>
+        <button class="privacy-pill" onclick="toggleRekap()">
+            <span>👁️</span> Laba
+        </button>
+    </div>
 
-        <!-- Input Form -->
+    <!-- Input Form -->
+    <div class="form-group">
+        <label>Pilih Ikan</label>
+        <select id="pilihBarang"></select>
+    </div>
+
+    <div class="row">
         <div class="form-group">
-            <label>Pilih Ikan</label>
-            <select id="pilihBarang"></select>
+            <label>Jumlah</label>
+            <input type="number" id="qty" value="1" step="0.1">
         </div>
-
-        <div class="row">
-            <div class="form-group">
-                <flex style="flex:1;">
-                    <label>Jumlah</label>
-                    <input type="number" id="qty" value="1" step="0.1">
-                </flex>
-            </div>
-            <div class="form-group">
-                <flex style="flex:1;">
-                    <label>Satuan</label>
-                    <select id="satuan">
-                        <option value="Ons">Ons</option>
-                        <option value="Kg">Kg</option>
-                    </select>
-                </flex>
-            </div>
-        </div>
-
         <div class="form-group">
-            <label>Harga Jual (Total Pembeli)</label>
-            <input type="number" id="totalJual" placeholder="Contoh: 10000">
+            <label>Satuan</label>
+            <select id="satuan">
+                <option value="Ons">Ons</option>
+                <option value="Kg">Kg</option>
+            </select>
         </div>
     </div>
 
-    <!-- Tombol Simpan (Pas di bawah layar tanpa perlu scroll) -->
+    <div class="form-group">
+        <label>Harga Jual (Total Pembeli)</label>
+        <input type="number" id="totalJual" placeholder="Contoh: 10000">
+    </div>
+
+    <!-- Tombol Simpan (Pasti muncul dan bisa discroll/dilihat dengan jelas) -->
     <button class="btn-main" id="btnSimpan" onclick="simpanTransaksi()">
         <span id="btnText">Simpan Transaksi</span>
         <div class="spinner" id="btnSpinner"></div>
@@ -158,7 +148,6 @@
     let produk = [];
 
     window.onload = () => {
-        // Tampilkan Tanggal & Rentang Bulan Otomatis
         const now = new Date();
         const tglSkrg = now.getDate();
         const bulan = now.toLocaleString('id-ID', { month: 'long' });
@@ -166,7 +155,6 @@
         document.getElementById('teksTglHariIni').innerText = `(${tglSkrg} ${bulan})`;
         document.getElementById('teksRentangBulan').innerText = `(1 s.d. ${tglSkrg} ${bulan})`;
 
-        // Ambil Data Produk & Rekap dari Google Sheet
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
