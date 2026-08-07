@@ -8,7 +8,6 @@
     <style>
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        /* Background Ilustrasi Kartun Ikan Laut yang Ceria */
         body { 
             background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.75)), 
                         url('https://img.freepik.com/free-vector/underwater-background-with-cute-cartoon-fish-sea-animals_1284-42996.jpg') no-repeat center center fixed; 
@@ -162,9 +161,20 @@
 
     window.onload = () => {
         tampilkanTanggalHariIni();
-        cekKoneksiInternet();
-        muatData();
-        window.addEventListener('online', updateStatusKoneksi);
+        updateStatusKoneksi();
+        
+        // Coba muat data dari cache lokal dulu agar instan saat offline
+        muatDataLocalCache();
+        
+        // Ambil data terbaru dari server jika online
+        if (navigator.onLine) {
+            muatDataServer();
+        }
+
+        window.addEventListener('online', () => {
+            updateStatusKoneksi();
+            muatDataServer();
+        });
         window.addEventListener('offline', updateStatusKoneksi);
     };
 
@@ -186,34 +196,49 @@
         }
     }
 
-    function cekKoneksiInternet() {
-        updateStatusKoneksi();
+    function renderDropdownIkan(listProduk) {
+        produk = listProduk || [];
+        let s = document.getElementById('pilihBarang');
+        s.innerHTML = '<option value="">-- Pilih Ikan & Cek Modal --</option>';
+        produk.forEach((p, i) => {
+            let modalRupiah = Number(p.modalKg || 0).toLocaleString('id-ID');
+            s.innerHTML += `<option value="${i}">${p.nama} (Modal: Rp ${modalRupiah}/Kg)</option>`;
+        });
     }
 
-    function muatData() {
+    function muatDataLocalCache() {
+        const cachedProduk = localStorage.getItem('wollfish_produk_cache');
+        const cachedTransaksi = localStorage.getItem('wollfish_transaksi_cache');
+        
+        if (cachedProduk) {
+            try {
+                renderDropdownIkan(JSON.parse(cachedProduk));
+            } catch(e) {}
+        }
+        if (cachedTransaksi) {
+            try {
+                hitungRekap(JSON.parse(cachedTransaksi));
+            } catch(e) {}
+        }
+    }
+
+    function muatDataServer() {
         fetch(WEB_APP_URL)
             .then(r => r.json())
             .then(res => {
-                produk = res.produk || [];
-                let s = document.getElementById('pilihBarang');
-                s.innerHTML = '<option value="">-- Pilih Ikan & Cek Modal --</option>';
-                produk.forEach((p, i) => {
-                    let modalRupiah = Number(p.modalKg || 0).toLocaleString('id-ID');
-                    s.innerHTML += `<option value="${i}">${p.nama} (Modal: Rp ${modalRupiah}/Kg)</option>`;
-                });
-
-                if(res.transaksi) {
+                if (res.produk) {
+                    localStorage.setItem('wollfish_produk_cache', JSON.stringify(res.produk));
+                    renderDropdownIkan(res.produk);
+                }
+                if (res.transaksi) {
+                    localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(res.transaksi));
                     hitungRekap(res.transaksi);
                 }
-                
-                document.getElementById('statusDot').className = "status-dot online";
-                document.getElementById('statusText').innerText = "Online";
+                updateStatusKoneksi();
             })
             .catch(err => {
-                console.error(err);
-                document.getElementById('pilihBarang').innerHTML = '<option value="">Gagal memuat data ikan</option>';
-                document.getElementById('statusDot').className = "status-dot offline";
-                document.getElementById('statusText').innerText = "Offline";
+                console.warn("Gagal sinkron dengan server, menggunakan mode offline.", err);
+                updateStatusKoneksi();
             });
     }
 
@@ -289,6 +314,15 @@
         spin.style.display = "block";
 
         let p = produk[idx];
+        
+        if (!navigator.onLine) {
+            showToast("⚠️ Perangkat Offline. Transaksi gagal dikirim ke server.");
+            btn.disabled = false;
+            txt.style.display = "inline";
+            spin.style.display = "none";
+            return;
+        }
+
         fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({
