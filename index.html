@@ -157,16 +157,17 @@
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
     let produk = [];
+    let transaksiGlobal = [];
     let rekapBuka = false;
 
     window.onload = () => {
         tampilkanTanggalHariIni();
         updateStatusKoneksi();
         
-        // Coba muat data dari cache lokal dulu agar instan saat offline
+        // 1. Ambil data dari Cache Lokal (bisa dibuka meskipun offline / tanpa sinyal)
         muatDataLocalCache();
         
-        // Ambil data terbaru dari server jika online
+        // 2. Jika online, sinkronkan data terbaru dari server secara senyap (background)
         if (navigator.onLine) {
             muatDataServer();
         }
@@ -211,13 +212,12 @@
         const cachedTransaksi = localStorage.getItem('wollfish_transaksi_cache');
         
         if (cachedProduk) {
-            try {
-                renderDropdownIkan(JSON.parse(cachedProduk));
-            } catch(e) {}
+            try { renderDropdownIkan(JSON.parse(cachedProduk)); } catch(e) {}
         }
         if (cachedTransaksi) {
             try {
-                hitungRekap(JSON.parse(cachedTransaksi));
+                transaksiGlobal = JSON.parse(cachedTransaksi);
+                hitungRekap(transaksiGlobal);
             } catch(e) {}
         }
     }
@@ -231,13 +231,13 @@
                     renderDropdownIkan(res.produk);
                 }
                 if (res.transaksi) {
+                    transaksiGlobal = res.transaksi;
                     localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(res.transaksi));
-                    hitungRekap(res.transaksi);
+                    hitungRekap(transaksiGlobal);
                 }
                 updateStatusKoneksi();
             })
             .catch(err => {
-                console.warn("Gagal sinkron dengan server, menggunakan mode offline.", err);
                 updateStatusKoneksi();
             });
     }
@@ -299,6 +299,7 @@
         let idx = document.getElementById('pilihBarang').value;
         let qty = parseFloat(document.getElementById('qty').value);
         let totalJual = parseFloat(document.getElementById('totalJual').value);
+        let satuan = document.getElementById('satuan').value;
 
         if (idx === "" || isNaN(qty) || isNaN(totalJual)) {
             showToast("⚠️ Lengkapi data terlebih dahulu!");
@@ -314,39 +315,65 @@
         spin.style.display = "block";
 
         let p = produk[idx];
-        
+
+        // Hitung estimasi omzet & laba lokal untuk update langsung di layar (tanpa reload)
+        let modalPerKg = Number(p.modalKg || 0);
+        let qtyKg = satuan === "Ons" ? qty / 10 : qty;
+        let totalModal = modalPerKg * qtyKg;
+        let labaLokal = totalJual - totalModal;
+        let todayIso = new Date().toISOString().split('T')[0];
+
+        // Masukkan transaksi baru ke memori lokal sementara
+        transaksiGlobal.push({
+            tanggal: todayIso,
+            omzet: totalJual,
+            laba: labaLokal
+        });
+        localStorage.setItem('wollfish_transaksi_cache', JSON.stringify(transaksiGlobal));
+        hitungRekap(transaksiGlobal); // Update rekap seketika di layar
+
+        // Jika offline, simpan notifikasi sukses lokal
         if (!navigator.onLine) {
-            showToast("⚠️ Perangkat Offline. Transaksi gagal dikirim ke server.");
-            btn.disabled = false;
-            txt.style.display = "inline";
-            spin.style.display = "none";
+            showToast("⚠️ Offline: Transaksi disimpan di HP.");
+            setTimeout(() => {
+                btn.disabled = false;
+                txt.style.display = "inline";
+                spin.style.display = "none";
+                document.getElementById('totalJual').value = "";
+            }, 1000);
             return;
         }
 
+        // Jika online, kirim ke server
         fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({
                 namaBarang: p.nama,
                 modalKg: p.modalKg,
                 qty: qty,
-                satuan: document.getElementById('satuan').value,
+                satuan: satuan,
                 totalOmzet: totalJual
             })
         }).then(r => r.json()).then(res => {
             if(res.status === "OK") {
-                showToast("✨ Transaksi Berhasil!");
-                setTimeout(() => { location.reload(); }, 1000);
+                showToast("✨ Transaksi Berhasil Disimpan!");
             } else {
-                showToast("❌ Gagal menyimpan.");
+                showToast("⚠️ Tersimpan di HP (Server Warning).");
+            }
+            setTimeout(() => {
                 btn.disabled = false;
                 txt.style.display = "inline";
                 spin.style.display = "none";
-            }
+                document.getElementById('totalJual').value = "";
+            }, 1000);
         }).catch(() => {
-            showToast("❌ Jaringan bermasalah.");
-            btn.disabled = false;
-            txt.style.display = "inline";
-            spin.style.display = "none";
+            showToast("⚠️ Jaringan putus, tersimpan di HP.");
+            setTimeout(() => {
+                btn.disabled = false;
+                txt.style.display = "inline";
+                spin.style.display = "none";
+                document.getElementById('totalJual').value = "";
+            }, 1000);
         });
     }
 </script>
