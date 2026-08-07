@@ -46,8 +46,8 @@
         .spinner { display: none; width: 20px; height: 20px; border: 3px solid #ffffff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Toast */
-        .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; display: flex; align-items: center; gap: 8px; }
+        /* Toast Modern Tema Menyesuaikan */
+        .toast-modern { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; display: flex; align-items: center; gap: 8px; border: 2px solid #334155; }
         .toast-modern.show { transform: translateX(-50%) translateY(0); }
 
         /* Panel Laporan Rahasia */
@@ -87,7 +87,7 @@
 
     <!-- Input Form -->
     <div class="form-group">
-        <label>Pilih Ikan</label>
+        <label>Pilih Ikan (Modal / Kg)</label>
         <select id="pilihBarang">
             <option value="">Memuat data ikan...</option>
         </select>
@@ -141,14 +141,13 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJfMcadKDG5bpS1x4xZ45zT5HA37rfYa_UzJyv3YcS687hayy2fTbGfYNCmK3iJs0dTg/exec";
+    const WEB_APP_URL = "URL_WEB_APP_ANDA_DISINI";
     let produk = [];
     let rekapBuka = false;
 
     window.onload = () => {
         cekKoneksiInternet();
         muatData();
-        // Deteksi status koneksi otomatis secara berkala
         window.addEventListener('online', updateStatusKoneksi);
         window.addEventListener('offline', updateStatusKoneksi);
     };
@@ -175,16 +174,16 @@
             .then(res => {
                 produk = res.produk || [];
                 let s = document.getElementById('pilihBarang');
-                s.innerHTML = '<option value="">-- Pilih Ikan --</option>';
+                s.innerHTML = '<option value="">-- Pilih Ikan & Cek Modal --</option>';
                 produk.forEach((p, i) => {
-                    s.innerHTML += `<option value="${i}">${p.nama}</option>`;
+                    let modalRupiah = Number(p.modalKg || 0).toLocaleString('id-ID');
+                    s.innerHTML += `<option value="${i}">${p.nama} (Modal: Rp ${modalRupiah}/Kg)</option>`;
                 });
 
                 if(res.transaksi) {
                     hitungRekap(res.transaksi);
                 }
                 
-                // Jika berhasil ambil data, pastikan status online menyala terang
                 document.getElementById('statusDot').className = "status-dot online";
                 document.getElementById('statusText').innerText = "Online";
             })
